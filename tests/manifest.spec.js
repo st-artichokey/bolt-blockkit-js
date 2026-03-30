@@ -13,7 +13,7 @@ describe("manifest.json", () => {
 
   it("has a user-friendly app name", async () => {
     const manifest = await loadManifest();
-    assert.equal(manifest.display_information.name, "Retro Recap App");
+    assert.equal(manifest.display_information.name, "RetroRun");
   });
 
   it("has a short description under 10 words", async () => {
@@ -51,7 +51,7 @@ describe("manifest.json", () => {
     const manifest = await loadManifest();
     assert.equal(
       manifest.features.bot_user.display_name,
-      "Retro Recap App",
+      "RetroRun",
     );
   });
 });

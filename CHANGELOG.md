@@ -1,8 +1,13 @@
 # Changelog
 
+## fix: Rename app to RetroRun everywhere
+
+- Updated app name, bot display name, and long_description in manifest.json and tests
+- "Recap" implied summarizing past retros; "RetroRun" better signals active input collection
+
 ## feat: Update manifest for Slack marketplace compliance
 
-- Renamed app from "bolt-blockkit-retro" to "Retro Recap App"
+- Renamed app from "bolt-blockkit-retro" to "RetroRun"
 - Shortened description to fit 10-word marketplace limit
 - Added `long_description` with detailed feature overview
 - Added `background_color` (#4A154B — Slack aubergine)
