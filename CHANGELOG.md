@@ -1,5 +1,14 @@
 # Changelog
 
+## feat: Add recent activity and unauthorized user handling to App Home
+
+- App Home now fetches recent retro messages via `conversations.history` and displays up to 3 entries
+- Shows "No retrospectives yet" empty state when no retros found
+- Shows limited view (no Start Retrospective button, configure prompt) when channel access fails or `RETRO_CHANNEL_ID` is not set
+- Added `channels:history` OAuth scope to manifest.json
+- Added 4 tests (TDD): recent retros, empty state, channel access failure, missing env var
+- Total tests: 35
+
 ## feat: Add support section and pricing disclosure to App Home
 
 - Added "Need help?" section with link to GitHub repo (https://github.com/st-artichokey/retrorun)

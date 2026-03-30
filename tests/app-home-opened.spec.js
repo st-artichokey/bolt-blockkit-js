@@ -1,39 +1,69 @@
-import { describe, it, mock } from "node:test";
+import { describe, it, mock, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import esmock from "esmock";
 
 describe("appHomeOpenedCallback", () => {
+  const originalEnv = process.env.RETRO_CHANNEL_ID;
+
+  beforeEach(() => {
+    process.env.RETRO_CHANNEL_ID = "C999";
+  });
+
+  afterEach(() => {
+    if (originalEnv === undefined) {
+      delete process.env.RETRO_CHANNEL_ID;
+    } else {
+      process.env.RETRO_CHANNEL_ID = originalEnv;
+    }
+  });
+
   const loadModule = () =>
     esmock("../listeners/events/app-home-opened.js", {});
 
+  /** Fake retro messages returned by conversations.history. */
+  const fakeRetroMessages = [
+    {
+      blocks: [{ type: "header", text: { type: "plain_text", text: "Sprint 4 Retro" } }],
+      ts: "1711800000.000000",
+    },
+    {
+      blocks: [{ type: "header", text: { type: "plain_text", text: "Sprint 3 Retro" } }],
+      ts: "1711700000.000000",
+    },
+  ];
+
+  /** Builds a mock client with configurable conversations.history. */
+  const buildClient = (historyResult = { messages: fakeRetroMessages }) => ({
+    views: { publish: mock.fn(async () => ({})) },
+    conversations: { history: mock.fn(async () => historyResult) },
+  });
+
   /** Helper to call the callback and return the published blocks. */
-  const getPublishedBlocks = async (userId = "U123") => {
+  const getPublishedBlocks = async (userId = "U123", client = null) => {
     const { appHomeOpenedCallback } = await loadModule();
-    const publishMock = mock.fn(async () => ({}));
-    const client = { views: { publish: publishMock } };
+    const c = client || buildClient();
     const event = { tab: "home", user: userId };
     const logger = { error: mock.fn() };
 
-    await appHomeOpenedCallback({ client, event, logger });
+    await appHomeOpenedCallback({ client: c, event, logger });
 
     return {
-      blocks: publishMock.mock.calls[0].arguments[0].view.blocks,
-      publishMock,
+      blocks: c.views.publish.mock.calls[0].arguments[0].view.blocks,
+      publishMock: c.views.publish,
       logger,
     };
   };
 
   it("publishes the home tab view for home tab events", async () => {
     const { appHomeOpenedCallback } = await loadModule();
-    const publishMock = mock.fn(async () => ({}));
-    const client = { views: { publish: publishMock } };
+    const client = buildClient();
     const event = { tab: "home", user: "U123" };
     const logger = { error: mock.fn() };
 
     await appHomeOpenedCallback({ client, event, logger });
 
-    assert.equal(publishMock.mock.calls.length, 1);
-    const call = publishMock.mock.calls[0].arguments[0];
+    assert.equal(client.views.publish.mock.calls.length, 1);
+    const call = client.views.publish.mock.calls[0].arguments[0];
     assert.equal(call.user_id, "U123");
     assert.equal(call.view.type, "home");
     assert.ok(call.view.blocks.length > 0);
@@ -41,14 +71,13 @@ describe("appHomeOpenedCallback", () => {
 
   it("skips non-home tab events", async () => {
     const { appHomeOpenedCallback } = await loadModule();
-    const publishMock = mock.fn(async () => ({}));
-    const client = { views: { publish: publishMock } };
+    const client = buildClient();
     const event = { tab: "messages", user: "U123" };
     const logger = { error: mock.fn() };
 
     await appHomeOpenedCallback({ client, event, logger });
 
-    assert.equal(publishMock.mock.calls.length, 0);
+    assert.equal(client.views.publish.mock.calls.length, 0);
   });
 
   it("includes header block with app title", async () => {
@@ -149,6 +178,75 @@ describe("appHomeOpenedCallback", () => {
     assert.ok(pricingBlock, "Expected a context block disclosing the app is free");
   });
 
+  it("shows recent retrospectives when channel has retro messages", async () => {
+    const { blocks } = await getPublishedBlocks();
+    const recentHeader = blocks.find(
+      (b) =>
+        b.type === "section" &&
+        b.text?.text?.includes("Recent Retrospectives"),
+    );
+    assert.ok(recentHeader, "Expected a Recent Retrospectives section");
+
+    const retroEntries = blocks.filter(
+      (b) =>
+        b.type === "section" &&
+        b.text?.text?.includes("Sprint") &&
+        !b.text.text.includes("Recent") &&
+        !b.text.text.includes("How it works"),
+    );
+    assert.ok(retroEntries.length > 0, "Expected at least one retro entry");
+  });
+
+  it("shows empty state when no retro messages exist", async () => {
+    const client = buildClient({ messages: [] });
+    const { blocks } = await getPublishedBlocks("U123", client);
+    const emptyState = blocks.find(
+      (b) =>
+        b.type === "section" &&
+        b.text?.text?.includes("No retrospectives yet"),
+    );
+    assert.ok(emptyState, "Expected a 'No retrospectives yet' message");
+  });
+
+  it("shows limited view without button when channel access fails", async () => {
+    const client = {
+      views: { publish: mock.fn(async () => ({})) },
+      conversations: {
+        history: mock.fn(async () => {
+          throw new Error("channel_not_found");
+        }),
+      },
+    };
+    const { blocks } = await getPublishedBlocks("U123", client);
+
+    const actionsBlock = blocks.find((b) => b.type === "actions");
+    assert.equal(
+      actionsBlock,
+      undefined,
+      "Limited view should not include actions block",
+    );
+
+    const configPrompt = blocks.find(
+      (b) =>
+        b.type === "section" &&
+        b.text?.text?.includes("configure"),
+    );
+    assert.ok(configPrompt, "Expected a prompt to configure the app");
+  });
+
+  it("shows limited view when RETRO_CHANNEL_ID is not set", async () => {
+    delete process.env.RETRO_CHANNEL_ID;
+    const client = buildClient();
+    const { blocks } = await getPublishedBlocks("U123", client);
+
+    const actionsBlock = blocks.find((b) => b.type === "actions");
+    assert.equal(
+      actionsBlock,
+      undefined,
+      "Limited view should not include actions block when channel not configured",
+    );
+  });
+
   it("logs errors from views.publish", async () => {
     const { appHomeOpenedCallback } = await loadModule();
     const error = new Error("publish failed");
@@ -158,6 +256,7 @@ describe("appHomeOpenedCallback", () => {
           throw error;
         }),
       },
+      conversations: { history: mock.fn(async () => ({ messages: [] })) },
     };
     const event = { tab: "home", user: "U123" };
     const logger = { error: mock.fn() };
