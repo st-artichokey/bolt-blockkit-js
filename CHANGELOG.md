@@ -1,5 +1,15 @@
 # Changelog
 
+## feat: Update manifest for Slack marketplace compliance
+
+- Renamed app from "bolt-blockkit-retro" to "Retro Recap App"
+- Shortened description to fit 10-word marketplace limit
+- Added `long_description` with detailed feature overview
+- Added `background_color` (#4A154B — Slack aubergine)
+- Updated `bot_user.display_name` to match app name
+- Added 5 manifest validation tests (TDD)
+- Total tests: 29
+
 ## fix: Use user-friendly language for shortcuts menu reference
 
 - Replaced "global shortcut" jargon with discoverable instruction: search "Start Retrospective" in the shortcuts menu (lightning bolt icon)
