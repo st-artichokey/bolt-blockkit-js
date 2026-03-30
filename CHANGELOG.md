@@ -1,5 +1,16 @@
 # Changelog
 
+## feat: Switch retro output from channel messages to shared canvas
+
+- Retro submissions now write to a shared channel canvas via `conversations.canvases.create` / `canvases.edit` instead of posting Block Kit messages
+- Added `buildRetroMarkdown()` to convert retro data to canvas markdown format
+- Added "Send me a copy of my responses" checkbox to the retro modal; sends Block Kit summary to the user's App Home Messages tab when selected
+- Removed Add Comment button, overflow menu (pin/bookmark), and `add-comment-submit.js` — canvases have native commenting
+- App Home now references the channel canvas instead of listing individual retro messages
+- Updated "How it works" step 3 to say "saved to the retro channel canvas"
+- Added `canvases:write` scope, removed unused `im:write` scope from manifest
+- Total tests: 43
+
 ## feat: Add recent activity and unauthorized user handling to App Home
 
 - App Home now fetches recent retro messages via `conversations.history` and displays up to 3 entries

@@ -1,59 +1,24 @@
 /**
- * Publishes the App Home tab with retrospective instructions and recent entries.
+ * Publishes the App Home tab with retrospective instructions.
  * Only fires for the "home" tab; other tabs are ignored.
  * @param {object} args - Bolt event callback arguments.
  * @param {import('@slack/bolt').WebClient} args.client - Slack Web API client.
  * @param {object} args.event - The app_home_opened event payload.
  * @param {object} args.logger - Bolt logger instance.
  */
-/**
- * Extracts recent retrospective entries from channel messages.
- * @param {Array} messages - Messages from conversations.history.
- * @returns {Array} Block Kit blocks for recent retros (up to 3).
- */
-const buildRecentRetrosBlocks = (messages) => {
-  const retros = messages
-    .filter((m) => m.blocks?.some((b) => b.type === "header"))
-    .slice(0, 3);
-
-  if (retros.length === 0) {
-    return [
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: "No retrospectives yet — start one above!",
-        },
-      },
-    ];
-  }
-
-  return retros.map((m) => {
-    const header = m.blocks.find((b) => b.type === "header");
-    const title = header?.text?.text || "Untitled Retro";
-    const date = new Date(Number.parseFloat(m.ts) * 1000).toLocaleDateString();
-    return {
-      type: "section",
-      text: { type: "mrkdwn", text: `*${title}* — ${date}` },
-    };
-  });
-};
-
 const appHomeOpenedCallback = async ({ client, event, logger }) => {
   if (event.tab !== "home") return;
 
   const channelId = process.env.RETRO_CHANNEL_ID;
   let hasChannelAccess = false;
-  let recentMessages = [];
 
   if (channelId) {
     try {
-      const result = await client.conversations.history({
+      await client.conversations.history({
         channel: channelId,
-        limit: 10,
+        limit: 1,
       });
       hasChannelAccess = true;
-      recentMessages = result.messages || [];
     } catch {
       hasChannelAccess = false;
     }
@@ -97,7 +62,7 @@ const appHomeOpenedCallback = async ({ client, event, logger }) => {
             "",
             '1. Click *Start Retrospective* above — or search "Start Retrospective" in the shortcuts menu (the lightning bolt icon)',
             "2. Fill out the form with your sprint feedback",
-            "3. A summary is posted to the retro channel for the team to review",
+            "3. Your responses are saved to the retro channel canvas for the team to review",
           ].join("\n"),
         },
       },
@@ -106,10 +71,9 @@ const appHomeOpenedCallback = async ({ client, event, logger }) => {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: "*Recent Retrospectives*",
+          text: `View all retrospectives in the <slack://channel?team=&id=${channelId}|retro channel> canvas.`,
         },
       },
-      ...buildRecentRetrosBlocks(recentMessages),
     );
   } else {
     blocks.push(
@@ -130,7 +94,7 @@ const appHomeOpenedCallback = async ({ client, event, logger }) => {
             "",
             '1. Search "Start Retrospective" in the shortcuts menu (the lightning bolt icon)',
             "2. Fill out the form with your sprint feedback",
-            "3. A summary is posted to the retro channel for the team to review",
+            "3. Your responses are saved to the retro channel canvas for the team to review",
           ].join("\n"),
         },
       },

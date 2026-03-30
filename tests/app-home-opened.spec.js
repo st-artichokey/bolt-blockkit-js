@@ -1,5 +1,5 @@
-import { describe, it, mock, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
+import { afterEach, beforeEach, describe, it, mock } from "node:test";
 import esmock from "esmock";
 
 describe("appHomeOpenedCallback", () => {
@@ -17,17 +17,26 @@ describe("appHomeOpenedCallback", () => {
     }
   });
 
-  const loadModule = () =>
-    esmock("../listeners/events/app-home-opened.js", {});
+  const loadModule = () => esmock("../listeners/events/app-home-opened.js", {});
 
   /** Fake retro messages returned by conversations.history. */
   const fakeRetroMessages = [
     {
-      blocks: [{ type: "header", text: { type: "plain_text", text: "Sprint 4 Retro" } }],
+      blocks: [
+        {
+          type: "header",
+          text: { type: "plain_text", text: "Sprint 4 Retro" },
+        },
+      ],
       ts: "1711800000.000000",
     },
     {
-      blocks: [{ type: "header", text: { type: "plain_text", text: "Sprint 3 Retro" } }],
+      blocks: [
+        {
+          type: "header",
+          text: { type: "plain_text", text: "Sprint 3 Retro" },
+        },
+      ],
       ts: "1711700000.000000",
     },
   ];
@@ -125,9 +134,7 @@ describe("appHomeOpenedCallback", () => {
   it("uses user-friendly language for the shortcuts menu reference", async () => {
     const { blocks } = await getPublishedBlocks();
     const howItWorks = blocks.find(
-      (b) =>
-        b.type === "section" &&
-        b.text?.text?.includes("shortcuts menu"),
+      (b) => b.type === "section" && b.text?.text?.includes("shortcuts menu"),
     );
     assert.ok(howItWorks, "Expected a reference to the shortcuts menu");
     assert.ok(
@@ -175,37 +182,18 @@ describe("appHomeOpenedCallback", () => {
         b.type === "context" &&
         b.elements?.some((el) => el.type === "mrkdwn" && /free/i.test(el.text)),
     );
-    assert.ok(pricingBlock, "Expected a context block disclosing the app is free");
+    assert.ok(
+      pricingBlock,
+      "Expected a context block disclosing the app is free",
+    );
   });
 
-  it("shows recent retrospectives when channel has retro messages", async () => {
+  it("references the channel canvas for viewing retrospectives", async () => {
     const { blocks } = await getPublishedBlocks();
-    const recentHeader = blocks.find(
-      (b) =>
-        b.type === "section" &&
-        b.text?.text?.includes("Recent Retrospectives"),
+    const canvasRef = blocks.find(
+      (b) => b.type === "section" && b.text?.text?.includes("canvas"),
     );
-    assert.ok(recentHeader, "Expected a Recent Retrospectives section");
-
-    const retroEntries = blocks.filter(
-      (b) =>
-        b.type === "section" &&
-        b.text?.text?.includes("Sprint") &&
-        !b.text.text.includes("Recent") &&
-        !b.text.text.includes("How it works"),
-    );
-    assert.ok(retroEntries.length > 0, "Expected at least one retro entry");
-  });
-
-  it("shows empty state when no retro messages exist", async () => {
-    const client = buildClient({ messages: [] });
-    const { blocks } = await getPublishedBlocks("U123", client);
-    const emptyState = blocks.find(
-      (b) =>
-        b.type === "section" &&
-        b.text?.text?.includes("No retrospectives yet"),
-    );
-    assert.ok(emptyState, "Expected a 'No retrospectives yet' message");
+    assert.ok(canvasRef, "Expected a section referencing the channel canvas");
   });
 
   it("shows limited view without button when channel access fails", async () => {
@@ -227,9 +215,7 @@ describe("appHomeOpenedCallback", () => {
     );
 
     const configPrompt = blocks.find(
-      (b) =>
-        b.type === "section" &&
-        b.text?.text?.includes("configure"),
+      (b) => b.type === "section" && b.text?.text?.includes("configure"),
     );
     assert.ok(configPrompt, "Expected a prompt to configure the app");
   });

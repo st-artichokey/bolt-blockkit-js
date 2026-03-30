@@ -140,6 +140,26 @@ export const buildRetroModal = () => ({
       },
       optional: true,
     },
+    { type: "divider" },
+    {
+      type: "input",
+      block_id: "dm_summary_block",
+      label: { type: "plain_text", text: "Personal Copy" },
+      element: {
+        type: "checkboxes",
+        action_id: "dm_summary",
+        options: [
+          {
+            text: {
+              type: "plain_text",
+              text: "Send me a copy of my responses",
+            },
+            value: "send_copy",
+          },
+        ],
+      },
+      optional: true,
+    },
   ],
 });
 

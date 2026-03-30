@@ -5,6 +5,9 @@ const MOOD_EMOJI = {
   tough: ":persevere:",
 };
 
+/** In-memory canvas ID cache keyed by channel ID. */
+const canvasCache = new Map();
+
 /**
  * Extracts structured form data from the modal submission values.
  * @param {object} values - The view.state.values object from the submission.
@@ -24,7 +27,7 @@ export const parseRetroValues = (values) => ({
 });
 
 /**
- * Builds the Block Kit message blocks for a retro summary.
+ * Builds the Block Kit message blocks for a retro summary (used for Messages tab copy).
  * @param {object} retro - Parsed retro data from parseRetroValues.
  * @param {string} userId - The Slack user ID of the submitter.
  * @returns {object[]} An array of Block Kit blocks.
@@ -79,31 +82,6 @@ export const buildRetroSummaryBlocks = (retro, userId) => {
     },
     { type: "divider" },
     {
-      type: "actions",
-      elements: [
-        {
-          type: "button",
-          text: { type: "plain_text", text: "Add Comment" },
-          action_id: "add_comment",
-          style: "primary",
-        },
-        {
-          type: "overflow",
-          action_id: "retro_overflow",
-          options: [
-            {
-              text: { type: "plain_text", text: ":pushpin: Pin to Channel" },
-              value: "pin",
-            },
-            {
-              text: { type: "plain_text", text: ":bookmark: Bookmark" },
-              value: "bookmark",
-            },
-          ],
-        },
-      ],
-    },
-    {
       type: "context",
       elements: [
         { type: "mrkdwn", text: `Submitted by <@${userId}> on ${retro.date}` },
@@ -113,8 +91,35 @@ export const buildRetroSummaryBlocks = (retro, userId) => {
 };
 
 /**
- * Handles the retrospective modal submission. Parses input and posts a
- * summary message to the configured channel.
+ * Builds canvas markdown content for a retro entry.
+ * @param {object} retro - Parsed retro data from parseRetroValues.
+ * @param {string} userId - The Slack user ID of the submitter.
+ * @returns {string} Markdown-formatted retro summary for canvas.
+ */
+export const buildRetroMarkdown = (retro, userId) => {
+  const moodEmoji = MOOD_EMOJI[retro.mood] || "";
+  const categoriesList =
+    retro.categories.length > 0 ? retro.categories.join(", ") : "None selected";
+
+  return [
+    `# ${retro.title}`,
+    `**Sprint:** ${retro.sprint} | **Date:** ${retro.date}`,
+    `**Mood:** ${moodEmoji} ${retro.mood} | **Focus Areas:** ${categoriesList}`,
+    "---",
+    "## What Went Well",
+    retro.wentWell,
+    "## What Didn't Go Well",
+    retro.wentWrong,
+    "## Action Items",
+    retro.actionItems,
+    `> Submitted by ![](@${userId}) on ${retro.date}`,
+    "",
+  ].join("\n\n");
+};
+
+/**
+ * Handles the retrospective modal submission. Writes retro content to the
+ * channel canvas and optionally sends a copy to the user's Messages tab.
  * @param {object} args - Bolt view submission callback arguments.
  * @param {Function} args.ack - Acknowledge the view submission.
  * @param {object} args.view - The submitted view payload.
@@ -140,13 +145,45 @@ export const retroSubmitCallback = async ({
     return;
   }
 
+  const markdown = buildRetroMarkdown(retro, userId);
+
   try {
-    await client.chat.postMessage({
-      channel,
-      text: `Retrospective: ${retro.title}`,
-      blocks: buildRetroSummaryBlocks(retro, userId),
-    });
+    const existingCanvasId = canvasCache.get(channel);
+
+    if (existingCanvasId) {
+      await client.canvases.edit({
+        canvas_id: existingCanvasId,
+        changes: [
+          {
+            operation: "insert_at_end",
+            document_content: { type: "markdown", markdown },
+          },
+        ],
+      });
+    } else {
+      const result = await client.conversations.canvases.create({
+        channel_id: channel,
+        document_content: { type: "markdown", markdown },
+      });
+      canvasCache.set(channel, result.canvas_id);
+    }
   } catch (error) {
-    logger.error("Failed to post retro summary", error);
+    logger.error("Failed to write retro to canvas", error);
+  }
+
+  const dmSelected =
+    view.state.values.dm_summary_block?.dm_summary?.selected_options?.length >
+    0;
+
+  if (dmSelected) {
+    try {
+      await client.chat.postMessage({
+        channel: userId,
+        text: `Your retrospective: ${retro.title}`,
+        blocks: buildRetroSummaryBlocks(retro, userId),
+      });
+    } catch (error) {
+      logger.error("Failed to send retro copy to Messages tab", error);
+    }
   }
 };
