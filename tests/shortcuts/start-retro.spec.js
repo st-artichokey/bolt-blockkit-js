@@ -3,7 +3,8 @@ import { describe, it, mock } from "node:test";
 import esmock from "esmock";
 
 describe("startRetroCallback", () => {
-  const loadModule = () => esmock("../listeners/shortcuts/start-retro.js", {});
+  const loadModule = () =>
+    esmock("../../listeners/shortcuts/start-retro.js", {});
 
   it("acknowledges the shortcut", async () => {
     const { startRetroCallback } = await loadModule();
@@ -55,7 +56,8 @@ describe("startRetroCallback", () => {
 });
 
 describe("buildRetroModal", () => {
-  const loadModule = () => esmock("../listeners/shortcuts/start-retro.js", {});
+  const loadModule = () =>
+    esmock("../../listeners/shortcuts/start-retro.js", {});
 
   it("returns a valid modal with all input blocks", async () => {
     const { buildRetroModal } = await loadModule();

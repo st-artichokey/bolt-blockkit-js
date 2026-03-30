@@ -4,8 +4,8 @@ import esmock from "esmock";
 
 describe("appHomeOpenedCallback", () => {
   const loadModule = (channelId = "C999") =>
-    esmock("../listeners/events/app-home-opened.js", {
-      "../listeners/channel-store.js": {
+    esmock("../../listeners/events/app-home-opened.js", {
+      "../../listeners/channel-store.js": {
         getRetroChannel: () => channelId,
       },
     });

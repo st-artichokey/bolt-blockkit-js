@@ -6,9 +6,9 @@ describe("memberJoinedChannelCallback", () => {
   it("stores channel when the bot itself joins", async () => {
     const setRetroChannel = mock.fn();
     const { memberJoinedChannelCallback } = await esmock(
-      "../listeners/events/member-joined-channel.js",
+      "../../listeners/events/member-joined-channel.js",
       {
-        "../listeners/channel-store.js": {
+        "../../listeners/channel-store.js": {
           getBotUserId: () => "U_BOT",
           setRetroChannel,
         },
@@ -27,9 +27,9 @@ describe("memberJoinedChannelCallback", () => {
   it("ignores when a non-bot user joins", async () => {
     const setRetroChannel = mock.fn();
     const { memberJoinedChannelCallback } = await esmock(
-      "../listeners/events/member-joined-channel.js",
+      "../../listeners/events/member-joined-channel.js",
       {
-        "../listeners/channel-store.js": {
+        "../../listeners/channel-store.js": {
           getBotUserId: () => "U_BOT",
           setRetroChannel,
         },
@@ -47,9 +47,9 @@ describe("memberJoinedChannelCallback", () => {
   it("ignores when bot user ID is not yet initialized", async () => {
     const setRetroChannel = mock.fn();
     const { memberJoinedChannelCallback } = await esmock(
-      "../listeners/events/member-joined-channel.js",
+      "../../listeners/events/member-joined-channel.js",
       {
-        "../listeners/channel-store.js": {
+        "../../listeners/channel-store.js": {
           getBotUserId: () => null,
           setRetroChannel,
         },

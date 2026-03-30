@@ -1,5 +1,12 @@
 # Changelog
 
+## refactor: Mirror source directory structure in test files
+
+- Moved test files into subdirectories matching `listeners/` structure: `tests/events/`, `tests/actions/`, `tests/shortcuts/`, `tests/views/`
+- `channel-store.spec.js` and `manifest.spec.js` stay at `tests/` root (mirror top-level sources)
+- Updated all `esmock()` import paths to match new depths
+- Total tests: 51
+
 ## feat: Auto-discover retro channel when bot is added
 
 - Created `channel-store.js` shared module for retro channel and bot user ID state

@@ -4,8 +4,8 @@ import esmock from "esmock";
 
 describe("startRetroHomeCallback", () => {
   const loadModule = () =>
-    esmock("../listeners/actions/retro-actions.js", {
-      "../listeners/shortcuts/start-retro.js": {
+    esmock("../../listeners/actions/retro-actions.js", {
+      "../../listeners/shortcuts/start-retro.js": {
         buildRetroModal: () => ({
           type: "modal",
           callback_id: "retro_submit",

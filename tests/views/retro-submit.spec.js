@@ -28,7 +28,7 @@ const buildFakeValues = (overrides = {}) => ({
 });
 
 describe("parseRetroValues", () => {
-  const loadModule = () => esmock("../listeners/views/retro-submit.js", {});
+  const loadModule = () => esmock("../../listeners/views/retro-submit.js", {});
 
   it("extracts all fields from modal values", async () => {
     const { parseRetroValues } = await loadModule();
@@ -55,7 +55,7 @@ describe("parseRetroValues", () => {
 });
 
 describe("buildRetroSummaryBlocks", () => {
-  const loadModule = () => esmock("../listeners/views/retro-submit.js", {});
+  const loadModule = () => esmock("../../listeners/views/retro-submit.js", {});
 
   it("returns blocks with header, sections, dividers, and context", async () => {
     const { buildRetroSummaryBlocks, parseRetroValues } = await loadModule();
@@ -104,7 +104,7 @@ describe("buildRetroSummaryBlocks", () => {
 });
 
 describe("buildRetroMarkdown", () => {
-  const loadModule = () => esmock("../listeners/views/retro-submit.js", {});
+  const loadModule = () => esmock("../../listeners/views/retro-submit.js", {});
 
   it("returns markdown string with retro title as heading", async () => {
     const { buildRetroMarkdown, parseRetroValues } = await loadModule();
@@ -152,8 +152,8 @@ describe("buildRetroMarkdown", () => {
 
 describe("retroSubmitCallback", () => {
   const loadModule = (channelId = "C999") =>
-    esmock("../listeners/views/retro-submit.js", {
-      "../listeners/channel-store.js": {
+    esmock("../../listeners/views/retro-submit.js", {
+      "../../listeners/channel-store.js": {
         getRetroChannel: () => channelId,
       },
     });
