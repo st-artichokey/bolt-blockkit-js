@@ -5,8 +5,8 @@ A Slack Bolt app demonstrating Block Kit UI for team retrospectives.
 ## Commit Conventions
 
 - Update `CHANGELOG.md` with a summary entry **before every commit** — include it in the same commit.
-- Update the session log in `claude-session-logs/session-YYYY-MM-DD.md` in the same commit as the changelog update.
-- Session log format follows the template in `claude-session-logs/session-2026-03-30.md`:
+- Update the session log in `claude-notes/logs/session-YYYY-MM-DD.md` in the same commit as the changelog update.
+- Session log format follows the template in `claude-notes/logs/session-2026-03-30.md`:
   - H2 sections group related work; each user prompt becomes an H3 header
   - Under each prompt: description of what was done, then a **Sources** section with linked references
   - End with a **Stats** section (branch, commits, test count, files modified)
