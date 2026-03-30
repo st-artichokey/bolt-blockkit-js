@@ -93,6 +93,24 @@ describe("appHomeOpenedCallback", () => {
     assert.ok(aiDisclosure, "Expected a context block with AI disclosure");
   });
 
+  it("uses user-friendly language for the shortcuts menu reference", async () => {
+    const { blocks } = await getPublishedBlocks();
+    const howItWorks = blocks.find(
+      (b) =>
+        b.type === "section" &&
+        b.text?.text?.includes("shortcuts menu"),
+    );
+    assert.ok(howItWorks, "Expected a reference to the shortcuts menu");
+    assert.ok(
+      howItWorks.text.text.includes("lightning bolt"),
+      "Expected a mention of the lightning bolt icon",
+    );
+    assert.ok(
+      !howItWorks.text.text.includes("global shortcut"),
+      "Should not use jargon 'global shortcut'",
+    );
+  });
+
   it("does not contain developer-facing Block Kit element list", async () => {
     const { blocks } = await getPublishedBlocks();
     const devSection = blocks.find(

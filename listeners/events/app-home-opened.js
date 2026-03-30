@@ -46,7 +46,7 @@ const appHomeOpenedCallback = async ({ client, event, logger }) => {
               text: [
                 "*How it works:*",
                 "",
-                "1. Click *Start Retrospective* above or use the global shortcut",
+                '1. Click *Start Retrospective* above — or search "Start Retrospective" in the shortcuts menu (the lightning bolt icon)',
                 "2. Fill out the form with your sprint feedback",
                 "3. A summary is posted to the retro channel for the team to review",
               ].join("\n"),

@@ -1,5 +1,11 @@
 # Changelog
 
+## fix: Use user-friendly language for shortcuts menu reference
+
+- Replaced "global shortcut" jargon with discoverable instruction: search "Start Retrospective" in the shortcuts menu (lightning bolt icon)
+- Added test asserting user-friendly language and no jargon
+- Total tests: 24
+
 ## feat: Update App Home to comply with Slack guidelines
 
 - Added personalized greeting with user mention
