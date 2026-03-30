@@ -17,10 +17,23 @@ registerListeners(app);
 (async () => {
   try {
     await app.start();
-    const authResult = await app.client.auth.test();
-    setBotUserId(authResult.user_id);
-    app.logger.info("Bolt app is running!");
   } catch (error) {
     app.logger.error("Failed to start the app", error);
+    process.exit(1);
   }
+
+  try {
+    const authResult = await app.client.auth.test();
+    if (!authResult.user_id) {
+      throw new Error("auth.test did not return a valid user_id");
+    }
+    setBotUserId(authResult.user_id);
+  } catch (error) {
+    app.logger.error(
+      "Failed to resolve bot user ID — auto-channel discovery is disabled",
+      error,
+    );
+  }
+
+  app.logger.info("Bolt app is running!");
 })();

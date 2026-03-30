@@ -7,8 +7,26 @@ const MOOD_EMOJI = {
   tough: ":persevere:",
 };
 
-/** In-memory canvas ID cache keyed by channel ID. */
+/** In-memory canvas ID cache keyed by channel ID (max 50 entries, LRU eviction). */
+const MAX_CACHE_SIZE = 50;
 const canvasCache = new Map();
+
+/** Per-channel promise locks to prevent concurrent canvas creation. */
+const channelLocks = new Map();
+
+/**
+ * Reads a required field from the modal values, throwing a descriptive error if missing.
+ */
+const requireField = (obj, path) => {
+  let current = obj;
+  for (const key of path) {
+    current = current?.[key];
+    if (current == null) {
+      throw new Error(`Missing required field: ${path.join(".")}`);
+    }
+  }
+  return current;
+};
 
 /**
  * Extracts structured form data from the modal submission values.
@@ -16,14 +34,29 @@ const canvasCache = new Map();
  * @returns {object} Parsed retro fields.
  */
 export const parseRetroValues = (values) => ({
-  title: values.retro_title_block.retro_title.value,
-  sprint: values.sprint_block.sprint_select.selected_option.text.text,
-  date: values.date_block.sprint_date.selected_date,
-  wentWell: values.went_well_block.went_well.value,
-  wentWrong: values.went_wrong_block.went_wrong.value,
-  actionItems: values.action_items_block.action_items.value,
-  mood: values.mood_block.team_mood.selected_option.value,
-  categories: (values.categories_block.categories.selected_options || []).map(
+  title: requireField(values, ["retro_title_block", "retro_title", "value"]),
+  sprint: requireField(values, [
+    "sprint_block",
+    "sprint_select",
+    "selected_option",
+    "text",
+    "text",
+  ]),
+  date: requireField(values, ["date_block", "sprint_date", "selected_date"]),
+  wentWell: requireField(values, ["went_well_block", "went_well", "value"]),
+  wentWrong: requireField(values, ["went_wrong_block", "went_wrong", "value"]),
+  actionItems: requireField(values, [
+    "action_items_block",
+    "action_items",
+    "value",
+  ]),
+  mood: requireField(values, [
+    "mood_block",
+    "team_mood",
+    "selected_option",
+    "value",
+  ]),
+  categories: (values.categories_block?.categories?.selected_options || []).map(
     (opt) => opt.text.text,
   ),
 });
@@ -120,6 +153,56 @@ export const buildRetroMarkdown = (retro, userId) => {
 };
 
 /**
+ * Writes markdown to the channel canvas, creating one if needed.
+ * Uses a per-channel lock to prevent concurrent canvas creation.
+ */
+const writeToCanvas = async (client, channel, markdown) => {
+  // Wait for any in-flight create for this channel to finish first
+  const pending = channelLocks.get(channel);
+  if (pending) {
+    await pending;
+  }
+
+  const existingCanvasId = canvasCache.get(channel);
+
+  if (existingCanvasId) {
+    try {
+      await client.canvases.edit({
+        canvas_id: existingCanvasId,
+        changes: [
+          {
+            operation: "insert_at_end",
+            document_content: { type: "markdown", markdown },
+          },
+        ],
+      });
+      return;
+    } catch {
+      canvasCache.delete(channel);
+    }
+  }
+
+  // Create a new canvas, storing the promise so concurrent callers can wait
+  const createPromise = client.conversations.canvases.create({
+    channel_id: channel,
+    document_content: { type: "markdown", markdown },
+  });
+  channelLocks.set(channel, createPromise);
+
+  try {
+    const result = await createPromise;
+    // Evict oldest entry if cache is full
+    if (canvasCache.size >= MAX_CACHE_SIZE) {
+      const oldest = canvasCache.keys().next().value;
+      canvasCache.delete(oldest);
+    }
+    canvasCache.set(channel, result.canvas_id);
+  } finally {
+    channelLocks.delete(channel);
+  }
+};
+
+/**
  * Handles the retrospective modal submission. Writes retro content to the
  * channel canvas and optionally sends a copy to the user's Messages tab.
  * @param {object} args - Bolt view submission callback arguments.
@@ -150,34 +233,7 @@ export const retroSubmitCallback = async ({
   const markdown = buildRetroMarkdown(retro, userId);
 
   try {
-    const existingCanvasId = canvasCache.get(channel);
-
-    if (existingCanvasId) {
-      try {
-        await client.canvases.edit({
-          canvas_id: existingCanvasId,
-          changes: [
-            {
-              operation: "insert_at_end",
-              document_content: { type: "markdown", markdown },
-            },
-          ],
-        });
-      } catch {
-        canvasCache.delete(channel);
-        const result = await client.conversations.canvases.create({
-          channel_id: channel,
-          document_content: { type: "markdown", markdown },
-        });
-        canvasCache.set(channel, result.canvas_id);
-      }
-    } else {
-      const result = await client.conversations.canvases.create({
-        channel_id: channel,
-        document_content: { type: "markdown", markdown },
-      });
-      canvasCache.set(channel, result.canvas_id);
-    }
+    await writeToCanvas(client, channel, markdown);
   } catch (error) {
     logger.error("Failed to write retro to canvas", error);
   }

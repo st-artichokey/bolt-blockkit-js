@@ -52,6 +52,26 @@ describe("parseRetroValues", () => {
     const result = parseRetroValues(values);
     assert.deepEqual(result.categories, []);
   });
+
+  it("throws a descriptive error when a required field is missing", async () => {
+    const { parseRetroValues } = await loadModule();
+    const values = buildFakeValues({ retro_title_block: {} });
+
+    assert.throws(() => parseRetroValues(values), {
+      message: /retro_title/i,
+    });
+  });
+
+  it("throws when mood selection is missing", async () => {
+    const { parseRetroValues } = await loadModule();
+    const values = buildFakeValues({
+      mood_block: { team_mood: { selected_option: null } },
+    });
+
+    assert.throws(() => parseRetroValues(values), {
+      message: /team_mood/i,
+    });
+  });
 });
 
 describe("buildRetroSummaryBlocks", () => {
@@ -284,6 +304,44 @@ describe("retroSubmitCallback", () => {
       client.conversations.canvases.create.mock.calls.length,
       1,
       "Should create a new canvas after edit failure",
+    );
+  });
+
+  it("only creates one canvas when two submissions race", async () => {
+    const { retroSubmitCallback } = await loadModule();
+    const client = buildClient();
+
+    const view = { state: { values: buildFakeValues() } };
+    const body = { user: { id: "U456" } };
+    const logger = { error: mock.fn() };
+
+    // Launch two submissions concurrently — both see no cached canvas
+    await Promise.all([
+      retroSubmitCallback({
+        ack: mock.fn(async () => {}),
+        view,
+        body,
+        client,
+        logger,
+      }),
+      retroSubmitCallback({
+        ack: mock.fn(async () => {}),
+        view,
+        body,
+        client,
+        logger,
+      }),
+    ]);
+
+    assert.equal(
+      client.conversations.canvases.create.mock.calls.length,
+      1,
+      "Should only create one canvas despite two concurrent submissions",
+    );
+    assert.equal(
+      client.canvases.edit.mock.calls.length,
+      1,
+      "Second submission should append via edit",
     );
   });
 

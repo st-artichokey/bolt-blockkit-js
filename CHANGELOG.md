@@ -1,5 +1,21 @@
 # Changelog
 
+## fix: Validate modal fields, verify action wiring, gitignore .slack/
+
+- Added `requireField` helper to `parseRetroValues` — throws descriptive errors (e.g., "Missing required field: retro_title_block.retro_title.value") instead of opaque TypeErrors on malformed payloads
+- Verified `retro-actions.js` → `actions/index.js` wiring is correct (no change needed)
+- Added `.slack/` to `.gitignore` and removed tracked `.slack/` files — these are local Slack CLI config
+- Added 2 tests: missing title field, missing mood selection
+- Total tests: 54
+
+## fix: Prevent concurrent canvas creation and cap cache size
+
+- Added per-channel promise lock in `writeToCanvas` — concurrent submissions wait for an in-flight create to finish, then append via edit instead of creating a duplicate canvas
+- Capped canvas cache at 50 entries with LRU eviction to prevent unbounded growth
+- Extracted `writeToCanvas` helper from `retroSubmitCallback` for clarity
+- Added test: two simultaneous submissions only create one canvas
+- Total tests: 52
+
 ## refactor: Mirror source directory structure in test files
 
 - Moved test files into subdirectories matching `listeners/` structure: `tests/events/`, `tests/actions/`, `tests/shortcuts/`, `tests/views/`
