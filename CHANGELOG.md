@@ -1,5 +1,12 @@
 # Changelog
 
+## refactor: Move session logs to claude-notes/logs and remove .env.example
+
+- Renamed `claude-session-logs/` to `claude-notes/logs/` to match emoji-tr-app directory structure
+- Added empty `claude-notes/notes/` directory for developer notes
+- Removed `.env.example` (users create `.env` directly)
+- Updated CLAUDE.md session log paths to reflect new location
+
 ## docs: Add README and remove token/cost tracking
 
 - Added README.md with project purpose, getting started guide, structure overview, and tech stack
