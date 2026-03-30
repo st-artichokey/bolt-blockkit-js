@@ -125,6 +125,30 @@ describe("appHomeOpenedCallback", () => {
     );
   });
 
+  it("includes a support section with a link to the GitHub repo", async () => {
+    const { blocks } = await getPublishedBlocks();
+    const supportBlock = blocks.find(
+      (b) =>
+        b.type === "section" &&
+        b.text?.text?.includes("https://github.com/st-artichokey/retrorun"),
+    );
+    assert.ok(supportBlock, "Expected a section with a GitHub support link");
+    assert.ok(
+      /help|support/i.test(supportBlock.text.text),
+      "Expected the support section to mention help or support",
+    );
+  });
+
+  it("includes a pricing disclosure", async () => {
+    const { blocks } = await getPublishedBlocks();
+    const pricingBlock = blocks.find(
+      (b) =>
+        b.type === "context" &&
+        b.elements?.some((el) => el.type === "mrkdwn" && /free/i.test(el.text)),
+    );
+    assert.ok(pricingBlock, "Expected a context block disclosing the app is free");
+  });
+
   it("logs errors from views.publish", async () => {
     const { appHomeOpenedCallback } = await loadModule();
     const error = new Error("publish failed");

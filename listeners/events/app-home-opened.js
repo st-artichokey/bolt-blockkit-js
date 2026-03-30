@@ -54,6 +54,23 @@ const appHomeOpenedCallback = async ({ client, event, logger }) => {
           },
           { type: "divider" },
           {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: "*Need help?*\nVisit our <https://github.com/st-artichokey/retrorun|support page> for documentation and to report issues.",
+            },
+          },
+          { type: "divider" },
+          {
+            type: "context",
+            elements: [
+              {
+                type: "mrkdwn",
+                text: "This app is free to use.",
+              },
+            ],
+          },
+          {
             type: "context",
             elements: [
               {

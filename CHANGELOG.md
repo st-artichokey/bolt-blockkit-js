@@ -1,5 +1,12 @@
 # Changelog
 
+## feat: Add support section and pricing disclosure to App Home
+
+- Added "Need help?" section with link to GitHub repo (https://github.com/st-artichokey/retrorun)
+- Added "This app is free to use" pricing disclosure context block
+- Added 2 tests (TDD): support link presence, pricing disclosure
+- Total tests: 31
+
 ## fix: Rename app to RetroRun everywhere
 
 - Updated app name, bot display name, and long_description in manifest.json and tests
