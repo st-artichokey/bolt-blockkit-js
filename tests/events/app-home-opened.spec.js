@@ -1,39 +1,51 @@
-import { describe, it, mock } from "node:test";
 import assert from "node:assert/strict";
+import { describe, it, mock } from "node:test";
 import esmock from "esmock";
 
 describe("appHomeOpenedCallback", () => {
-  const loadModule = () =>
-    esmock("../listeners/events/app-home-opened.js", {});
+  const loadModule = (channelId = "C999") =>
+    esmock("../../listeners/events/app-home-opened.js", {
+      "../../listeners/channel-store.js": {
+        getRetroChannel: () => channelId,
+      },
+    });
+
+  /** Builds a mock client with configurable conversations.history. */
+  const buildClient = () => ({
+    views: { publish: mock.fn(async () => ({})) },
+    conversations: { history: mock.fn(async () => ({ messages: [] })) },
+  });
 
   /** Helper to call the callback and return the published blocks. */
-  const getPublishedBlocks = async (userId = "U123") => {
-    const { appHomeOpenedCallback } = await loadModule();
-    const publishMock = mock.fn(async () => ({}));
-    const client = { views: { publish: publishMock } };
+  const getPublishedBlocks = async (
+    userId = "U123",
+    client = null,
+    channelId = "C999",
+  ) => {
+    const { appHomeOpenedCallback } = await loadModule(channelId);
+    const c = client || buildClient();
     const event = { tab: "home", user: userId };
     const logger = { error: mock.fn() };
 
-    await appHomeOpenedCallback({ client, event, logger });
+    await appHomeOpenedCallback({ client: c, event, logger });
 
     return {
-      blocks: publishMock.mock.calls[0].arguments[0].view.blocks,
-      publishMock,
+      blocks: c.views.publish.mock.calls[0].arguments[0].view.blocks,
+      publishMock: c.views.publish,
       logger,
     };
   };
 
   it("publishes the home tab view for home tab events", async () => {
     const { appHomeOpenedCallback } = await loadModule();
-    const publishMock = mock.fn(async () => ({}));
-    const client = { views: { publish: publishMock } };
+    const client = buildClient();
     const event = { tab: "home", user: "U123" };
     const logger = { error: mock.fn() };
 
     await appHomeOpenedCallback({ client, event, logger });
 
-    assert.equal(publishMock.mock.calls.length, 1);
-    const call = publishMock.mock.calls[0].arguments[0];
+    assert.equal(client.views.publish.mock.calls.length, 1);
+    const call = client.views.publish.mock.calls[0].arguments[0];
     assert.equal(call.user_id, "U123");
     assert.equal(call.view.type, "home");
     assert.ok(call.view.blocks.length > 0);
@@ -41,14 +53,13 @@ describe("appHomeOpenedCallback", () => {
 
   it("skips non-home tab events", async () => {
     const { appHomeOpenedCallback } = await loadModule();
-    const publishMock = mock.fn(async () => ({}));
-    const client = { views: { publish: publishMock } };
+    const client = buildClient();
     const event = { tab: "messages", user: "U123" };
     const logger = { error: mock.fn() };
 
     await appHomeOpenedCallback({ client, event, logger });
 
-    assert.equal(publishMock.mock.calls.length, 0);
+    assert.equal(client.views.publish.mock.calls.length, 0);
   });
 
   it("includes header block with app title", async () => {
@@ -96,9 +107,7 @@ describe("appHomeOpenedCallback", () => {
   it("uses user-friendly language for the shortcuts menu reference", async () => {
     const { blocks } = await getPublishedBlocks();
     const howItWorks = blocks.find(
-      (b) =>
-        b.type === "section" &&
-        b.text?.text?.includes("shortcuts menu"),
+      (b) => b.type === "section" && b.text?.text?.includes("shortcuts menu"),
     );
     assert.ok(howItWorks, "Expected a reference to the shortcuts menu");
     assert.ok(
@@ -125,6 +134,77 @@ describe("appHomeOpenedCallback", () => {
     );
   });
 
+  it("includes a support section with a link to the GitHub repo", async () => {
+    const { blocks } = await getPublishedBlocks();
+    const supportBlock = blocks.find(
+      (b) =>
+        b.type === "section" &&
+        b.text?.text?.includes("https://github.com/st-artichokey/retrorun"),
+    );
+    assert.ok(supportBlock, "Expected a section with a GitHub support link");
+    assert.ok(
+      /help|support/i.test(supportBlock.text.text),
+      "Expected the support section to mention help or support",
+    );
+  });
+
+  it("includes a pricing disclosure", async () => {
+    const { blocks } = await getPublishedBlocks();
+    const pricingBlock = blocks.find(
+      (b) =>
+        b.type === "context" &&
+        b.elements?.some((el) => el.type === "mrkdwn" && /free/i.test(el.text)),
+    );
+    assert.ok(
+      pricingBlock,
+      "Expected a context block disclosing the app is free",
+    );
+  });
+
+  it("references the channel canvas for viewing retrospectives", async () => {
+    const { blocks } = await getPublishedBlocks();
+    const canvasRef = blocks.find(
+      (b) => b.type === "section" && b.text?.text?.includes("canvas"),
+    );
+    assert.ok(canvasRef, "Expected a section referencing the channel canvas");
+  });
+
+  it("shows limited view without button when channel access fails", async () => {
+    const client = {
+      views: { publish: mock.fn(async () => ({})) },
+      conversations: {
+        history: mock.fn(async () => {
+          throw new Error("channel_not_found");
+        }),
+      },
+    };
+    const { blocks } = await getPublishedBlocks("U123", client);
+
+    const actionsBlock = blocks.find((b) => b.type === "actions");
+    assert.equal(
+      actionsBlock,
+      undefined,
+      "Limited view should not include actions block",
+    );
+
+    const invitePrompt = blocks.find(
+      (b) => b.type === "section" && b.text?.text?.includes("invite"),
+    );
+    assert.ok(invitePrompt, "Expected a prompt to invite the bot to a channel");
+  });
+
+  it("shows limited view when retro channel is not configured", async () => {
+    const client = buildClient();
+    const { blocks } = await getPublishedBlocks("U123", client, null);
+
+    const actionsBlock = blocks.find((b) => b.type === "actions");
+    assert.equal(
+      actionsBlock,
+      undefined,
+      "Limited view should not include actions block when channel not configured",
+    );
+  });
+
   it("logs errors from views.publish", async () => {
     const { appHomeOpenedCallback } = await loadModule();
     const error = new Error("publish failed");
@@ -134,6 +214,7 @@ describe("appHomeOpenedCallback", () => {
           throw error;
         }),
       },
+      conversations: { history: mock.fn(async () => ({ messages: [] })) },
     };
     const event = { tab: "home", user: "U123" };
     const logger = { error: mock.fn() };

@@ -4,16 +4,16 @@ A Slack Bolt app that demonstrates [Block Kit](https://api.slack.com/block-kit) 
 
 ## What it does
 
-Teams use a global shortcut to open a retrospective form, fill in sprint feedback, and post a structured summary to a channel. The app showcases a wide range of Block Kit elements:
+Teams use a global shortcut to open a retrospective form, fill in sprint feedback, and save a structured summary to a shared channel canvas. The app showcases a wide range of Block Kit elements:
 
 - **Plain-text inputs** — single-line and multi-line
 - **Static select menu** — sprint/iteration picker
 - **Datepicker** — sprint end date
 - **Radio buttons** — team mood selector
-- **Checkboxes** — focus area categories
+- **Checkboxes** — focus area categories and personal copy opt-in
 - **Modals** — form collection with submission handling
-- **Chained modals** — "Add Comment" opens a secondary modal
-- **Actions block** — buttons and overflow menus
+- **Actions block** — buttons for starting retrospectives
+- **Canvas markdown** — rich retrospective summaries with native commenting
 - **Header, section, divider, and context blocks** — rich message layout
 
 ## Getting started
@@ -27,8 +27,7 @@ Teams use a global shortcut to open a retrospective form, fill in sprint feedbac
 
 2. **Configure environment**
    ```bash
-   cp .env.example .env
-   # Fill in your Slack tokens and channel ID
+   # Create a .env file with your Slack tokens and channel ID
    ```
 
 3. **Run locally** (Socket Mode)
@@ -60,10 +59,9 @@ Teams use a global shortcut to open a retrospective form, fill in sprint feedbac
 │   ├── shortcuts/
 │   │   └── start-retro.js          # Global shortcut → retro modal
 │   ├── views/
-│   │   ├── retro-submit.js         # Modal submission → channel post
-│   │   └── add-comment-submit.js   # Chained modal for comments
+│   │   └── retro-submit.js         # Modal submission → canvas write
 │   └── actions/
-│       └── retro-actions.js        # Button and overflow actions
+│       └── retro-actions.js        # App Home button actions
 └── tests/                          # Unit tests (Node.js test runner + esmock)
 ```
 

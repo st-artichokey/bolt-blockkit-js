@@ -1,8 +1,31 @@
+import { getRetroChannel } from "../channel-store.js";
+
 /** Maps mood values to display emoji. */
 const MOOD_EMOJI = {
   great: ":tada:",
   ok: ":slightly_smiling_face:",
   tough: ":persevere:",
+};
+
+/** In-memory canvas ID cache keyed by channel ID (max 50 entries, LRU eviction). */
+const MAX_CACHE_SIZE = 50;
+const canvasCache = new Map();
+
+/** Per-channel promise locks to prevent concurrent canvas creation. */
+const channelLocks = new Map();
+
+/**
+ * Reads a required field from the modal values, throwing a descriptive error if missing.
+ */
+const requireField = (obj, path) => {
+  let current = obj;
+  for (const key of path) {
+    current = current?.[key];
+    if (current == null) {
+      throw new Error(`Missing required field: ${path.join(".")}`);
+    }
+  }
+  return current;
 };
 
 /**
@@ -11,20 +34,35 @@ const MOOD_EMOJI = {
  * @returns {object} Parsed retro fields.
  */
 export const parseRetroValues = (values) => ({
-  title: values.retro_title_block.retro_title.value,
-  sprint: values.sprint_block.sprint_select.selected_option.text.text,
-  date: values.date_block.sprint_date.selected_date,
-  wentWell: values.went_well_block.went_well.value,
-  wentWrong: values.went_wrong_block.went_wrong.value,
-  actionItems: values.action_items_block.action_items.value,
-  mood: values.mood_block.team_mood.selected_option.value,
-  categories: (values.categories_block.categories.selected_options || []).map(
+  title: requireField(values, ["retro_title_block", "retro_title", "value"]),
+  sprint: requireField(values, [
+    "sprint_block",
+    "sprint_select",
+    "selected_option",
+    "text",
+    "text",
+  ]),
+  date: requireField(values, ["date_block", "sprint_date", "selected_date"]),
+  wentWell: requireField(values, ["went_well_block", "went_well", "value"]),
+  wentWrong: requireField(values, ["went_wrong_block", "went_wrong", "value"]),
+  actionItems: requireField(values, [
+    "action_items_block",
+    "action_items",
+    "value",
+  ]),
+  mood: requireField(values, [
+    "mood_block",
+    "team_mood",
+    "selected_option",
+    "value",
+  ]),
+  categories: (values.categories_block?.categories?.selected_options || []).map(
     (opt) => opt.text.text,
   ),
 });
 
 /**
- * Builds the Block Kit message blocks for a retro summary.
+ * Builds the Block Kit message blocks for a retro summary (used for Messages tab copy).
  * @param {object} retro - Parsed retro data from parseRetroValues.
  * @param {string} userId - The Slack user ID of the submitter.
  * @returns {object[]} An array of Block Kit blocks.
@@ -79,31 +117,6 @@ export const buildRetroSummaryBlocks = (retro, userId) => {
     },
     { type: "divider" },
     {
-      type: "actions",
-      elements: [
-        {
-          type: "button",
-          text: { type: "plain_text", text: "Add Comment" },
-          action_id: "add_comment",
-          style: "primary",
-        },
-        {
-          type: "overflow",
-          action_id: "retro_overflow",
-          options: [
-            {
-              text: { type: "plain_text", text: ":pushpin: Pin to Channel" },
-              value: "pin",
-            },
-            {
-              text: { type: "plain_text", text: ":bookmark: Bookmark" },
-              value: "bookmark",
-            },
-          ],
-        },
-      ],
-    },
-    {
       type: "context",
       elements: [
         { type: "mrkdwn", text: `Submitted by <@${userId}> on ${retro.date}` },
@@ -113,8 +126,85 @@ export const buildRetroSummaryBlocks = (retro, userId) => {
 };
 
 /**
- * Handles the retrospective modal submission. Parses input and posts a
- * summary message to the configured channel.
+ * Builds canvas markdown content for a retro entry.
+ * @param {object} retro - Parsed retro data from parseRetroValues.
+ * @param {string} userId - The Slack user ID of the submitter.
+ * @returns {string} Markdown-formatted retro summary for canvas.
+ */
+export const buildRetroMarkdown = (retro, userId) => {
+  const moodEmoji = MOOD_EMOJI[retro.mood] || "";
+  const categoriesList =
+    retro.categories.length > 0 ? retro.categories.join(", ") : "None selected";
+
+  return [
+    `# ${retro.title}`,
+    `**Sprint:** ${retro.sprint} | **Date:** ${retro.date}`,
+    `**Mood:** ${moodEmoji} ${retro.mood} | **Focus Areas:** ${categoriesList}`,
+    "---",
+    "## What Went Well",
+    retro.wentWell,
+    "## What Didn't Go Well",
+    retro.wentWrong,
+    "## Action Items",
+    retro.actionItems,
+    `> Submitted by ![](@${userId}) on ${retro.date}`,
+    "",
+  ].join("\n\n");
+};
+
+/**
+ * Writes markdown to the channel canvas, creating one if needed.
+ * Uses a per-channel lock to prevent concurrent canvas creation.
+ */
+const writeToCanvas = async (client, channel, markdown) => {
+  // Wait for any in-flight create for this channel to finish first
+  const pending = channelLocks.get(channel);
+  if (pending) {
+    await pending;
+  }
+
+  const existingCanvasId = canvasCache.get(channel);
+
+  if (existingCanvasId) {
+    try {
+      await client.canvases.edit({
+        canvas_id: existingCanvasId,
+        changes: [
+          {
+            operation: "insert_at_end",
+            document_content: { type: "markdown", markdown },
+          },
+        ],
+      });
+      return;
+    } catch {
+      canvasCache.delete(channel);
+    }
+  }
+
+  // Create a new canvas, storing the promise so concurrent callers can wait
+  const createPromise = client.conversations.canvases.create({
+    channel_id: channel,
+    document_content: { type: "markdown", markdown },
+  });
+  channelLocks.set(channel, createPromise);
+
+  try {
+    const result = await createPromise;
+    // Evict oldest entry if cache is full
+    if (canvasCache.size >= MAX_CACHE_SIZE) {
+      const oldest = canvasCache.keys().next().value;
+      canvasCache.delete(oldest);
+    }
+    canvasCache.set(channel, result.canvas_id);
+  } finally {
+    channelLocks.delete(channel);
+  }
+};
+
+/**
+ * Handles the retrospective modal submission. Writes retro content to the
+ * channel canvas and optionally sends a copy to the user's Messages tab.
  * @param {object} args - Bolt view submission callback arguments.
  * @param {Function} args.ack - Acknowledge the view submission.
  * @param {object} args.view - The submitted view payload.
@@ -133,20 +223,34 @@ export const retroSubmitCallback = async ({
 
   const retro = parseRetroValues(view.state.values);
   const userId = body.user.id;
-  const channel = process.env.RETRO_CHANNEL_ID;
+  const channel = getRetroChannel();
 
   if (!channel) {
-    logger.error("RETRO_CHANNEL_ID is not set");
+    logger.error("Retro channel is not configured");
     return;
   }
 
+  const markdown = buildRetroMarkdown(retro, userId);
+
   try {
-    await client.chat.postMessage({
-      channel,
-      text: `Retrospective: ${retro.title}`,
-      blocks: buildRetroSummaryBlocks(retro, userId),
-    });
+    await writeToCanvas(client, channel, markdown);
   } catch (error) {
-    logger.error("Failed to post retro summary", error);
+    logger.error("Failed to write retro to canvas", error);
+  }
+
+  const dmSelected =
+    view.state.values.dm_summary_block?.dm_summary?.selected_options?.length >
+    0;
+
+  if (dmSelected) {
+    try {
+      await client.chat.postMessage({
+        channel: userId,
+        text: `Your retrospective: ${retro.title}`,
+        blocks: buildRetroSummaryBlocks(retro, userId),
+      });
+    } catch (error) {
+      logger.error("Failed to send retro copy to Messages tab", error);
+    }
   }
 };

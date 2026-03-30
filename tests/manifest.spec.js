@@ -1,6 +1,6 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { describe, it } from "node:test";
 
 describe("manifest.json", () => {
   const loadManifest = async () => {
@@ -13,13 +13,17 @@ describe("manifest.json", () => {
 
   it("has a user-friendly app name", async () => {
     const manifest = await loadManifest();
-    assert.equal(manifest.display_information.name, "Retro Recap App");
+    assert.equal(manifest.display_information.name, "RetroRun");
   });
 
   it("has a short description under 10 words", async () => {
     const manifest = await loadManifest();
-    const wordCount = manifest.display_information.description.split(/\s+/).length;
-    assert.ok(wordCount <= 10, `Description is ${wordCount} words, expected <= 10`);
+    const wordCount =
+      manifest.display_information.description.split(/\s+/).length;
+    assert.ok(
+      wordCount <= 10,
+      `Description is ${wordCount} words, expected <= 10`,
+    );
   });
 
   it("has a long_description for marketplace listing", async () => {
@@ -49,9 +53,6 @@ describe("manifest.json", () => {
 
   it("has bot_user display_name matching app name", async () => {
     const manifest = await loadManifest();
-    assert.equal(
-      manifest.features.bot_user.display_name,
-      "Retro Recap App",
-    );
+    assert.equal(manifest.features.bot_user.display_name, "RetroRun");
   });
 });
