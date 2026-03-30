@@ -1,0 +1,7 @@
+{
+  "project_id": "",
+  "manifest_source": {
+    "type": "local",
+    "path": "manifest.json"
+  }
+}
