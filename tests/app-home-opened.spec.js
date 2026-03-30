@@ -19,32 +19,10 @@ describe("appHomeOpenedCallback", () => {
 
   const loadModule = () => esmock("../listeners/events/app-home-opened.js", {});
 
-  /** Fake retro messages returned by conversations.history. */
-  const fakeRetroMessages = [
-    {
-      blocks: [
-        {
-          type: "header",
-          text: { type: "plain_text", text: "Sprint 4 Retro" },
-        },
-      ],
-      ts: "1711800000.000000",
-    },
-    {
-      blocks: [
-        {
-          type: "header",
-          text: { type: "plain_text", text: "Sprint 3 Retro" },
-        },
-      ],
-      ts: "1711700000.000000",
-    },
-  ];
-
   /** Builds a mock client with configurable conversations.history. */
-  const buildClient = (historyResult = { messages: fakeRetroMessages }) => ({
+  const buildClient = () => ({
     views: { publish: mock.fn(async () => ({})) },
-    conversations: { history: mock.fn(async () => historyResult) },
+    conversations: { history: mock.fn(async () => ({ messages: [] })) },
   });
 
   /** Helper to call the callback and return the published blocks. */

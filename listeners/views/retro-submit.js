@@ -151,15 +151,24 @@ export const retroSubmitCallback = async ({
     const existingCanvasId = canvasCache.get(channel);
 
     if (existingCanvasId) {
-      await client.canvases.edit({
-        canvas_id: existingCanvasId,
-        changes: [
-          {
-            operation: "insert_at_end",
-            document_content: { type: "markdown", markdown },
-          },
-        ],
-      });
+      try {
+        await client.canvases.edit({
+          canvas_id: existingCanvasId,
+          changes: [
+            {
+              operation: "insert_at_end",
+              document_content: { type: "markdown", markdown },
+            },
+          ],
+        });
+      } catch {
+        canvasCache.delete(channel);
+        const result = await client.conversations.canvases.create({
+          channel_id: channel,
+          document_content: { type: "markdown", markdown },
+        });
+        canvasCache.set(channel, result.canvas_id);
+      }
     } else {
       const result = await client.conversations.canvases.create({
         channel_id: channel,

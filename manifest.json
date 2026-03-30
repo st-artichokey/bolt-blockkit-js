@@ -6,7 +6,7 @@
   "display_information": {
     "name": "RetroRun",
     "description": "Collect sprint retrospective feedback from your team",
-    "long_description": "RetroRun makes it easy to run team retrospectives directly in Slack. Use the global shortcut or App Home button to open an interactive form where teammates share what went well, what didn't, and action items for the next sprint. Responses are compiled into a rich summary posted to your retro channel — complete with mood tracking, focus area tags, and threaded comments for follow-up discussion.",
+    "long_description": "RetroRun makes it easy to run team retrospectives directly in Slack. Use the global shortcut or App Home button to open an interactive form where teammates share what went well, what didn't, and action items for the next sprint. Responses are saved to a shared channel canvas — complete with mood tracking, focus area tags, and native commenting for follow-up discussion.",
     "background_color": "#4A154B"
   },
   "features": {

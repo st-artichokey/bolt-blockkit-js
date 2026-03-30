@@ -198,6 +198,10 @@ describe("retroSubmitCallback", () => {
       client.conversations.canvases.create.mock.calls[0].arguments[0];
     assert.equal(createCall.channel_id, "C999");
     assert.equal(createCall.document_content.type, "markdown");
+    assert.ok(
+      createCall.document_content.markdown.includes("# Sprint 4 Retro"),
+      "Canvas should contain retro title as markdown heading",
+    );
   });
 
   it("appends to existing canvas on subsequent submissions", async () => {
@@ -259,6 +263,37 @@ describe("retroSubmitCallback", () => {
     await retroSubmitCallback({ ack, view, body, client, logger });
 
     assert.equal(client.chat.postMessage.mock.calls.length, 0);
+  });
+
+  it("creates a new canvas when edit fails with stale cache", async () => {
+    const { retroSubmitCallback } = await loadModule();
+    const ack = mock.fn(async () => {});
+    const client = buildClient();
+    const view = { state: { values: buildFakeValues() } };
+    const body = { user: { id: "U456" } };
+    const logger = { error: mock.fn() };
+
+    // First call creates the canvas and caches the ID
+    await retroSubmitCallback({ ack, view, body, client, logger });
+    assert.equal(client.conversations.canvases.create.mock.calls.length, 1);
+
+    // Make edit fail (simulating deleted canvas)
+    client.canvases.edit = mock.fn(async () => {
+      throw new Error("canvas_not_found");
+    });
+    // Reset create mock to return a new canvas ID
+    client.conversations.canvases.create = mock.fn(async () => ({
+      canvas_id: "F_RECOVERED_CANVAS",
+    }));
+
+    // Second call should recover by creating a new canvas
+    await retroSubmitCallback({ ack, view, body, client, logger });
+
+    assert.equal(
+      client.conversations.canvases.create.mock.calls.length,
+      1,
+      "Should create a new canvas after edit failure",
+    );
   });
 
   it("logs error when RETRO_CHANNEL_ID is not set", async () => {

@@ -1,5 +1,14 @@
 # Changelog
 
+## fix: Pre-merge cleanup — stale docs, unused test helpers, cache recovery
+
+- Updated README.md to reflect canvas output, removed references to deleted files and features
+- Updated manifest.json `long_description` to reference native canvas commenting
+- Removed unused `fakeRetroMessages` from app-home-opened tests, simplified `buildClient`
+- Added canvas markdown content assertion to submission test
+- Added stale cache recovery: if `canvases.edit` fails, clears cache and creates a new canvas
+- Total tests: 44
+
 ## feat: Switch retro output from channel messages to shared canvas
 
 - Retro submissions now write to a shared channel canvas via `conversations.canvases.create` / `canvases.edit` instead of posting Block Kit messages
