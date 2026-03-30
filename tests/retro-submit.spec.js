@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { afterEach, beforeEach, describe, it, mock } from "node:test";
+import { describe, it, mock } from "node:test";
 import esmock from "esmock";
 
 /** Builds a fake view.state.values object matching the retro modal structure. */
@@ -96,8 +96,8 @@ describe("buildRetroSummaryBlocks", () => {
     );
     const blocks = buildRetroSummaryBlocks(retro, "U456");
 
-    const fieldsBlock = blocks.find(
-      (b) => b.fields && b.fields.some((f) => f.text.includes("Focus Areas")),
+    const fieldsBlock = blocks.find((b) =>
+      b.fields?.some((f) => f.text.includes("Focus Areas")),
     );
     assert.ok(fieldsBlock.fields.some((f) => f.text.includes("None selected")));
   });
@@ -151,21 +151,12 @@ describe("buildRetroMarkdown", () => {
 });
 
 describe("retroSubmitCallback", () => {
-  const originalEnv = process.env.RETRO_CHANNEL_ID;
-
-  beforeEach(() => {
-    process.env.RETRO_CHANNEL_ID = "C999";
-  });
-
-  afterEach(() => {
-    if (originalEnv === undefined) {
-      delete process.env.RETRO_CHANNEL_ID;
-    } else {
-      process.env.RETRO_CHANNEL_ID = originalEnv;
-    }
-  });
-
-  const loadModule = () => esmock("../listeners/views/retro-submit.js", {});
+  const loadModule = (channelId = "C999") =>
+    esmock("../listeners/views/retro-submit.js", {
+      "../listeners/channel-store.js": {
+        getRetroChannel: () => channelId,
+      },
+    });
 
   /** Builds a mock client with canvas and chat APIs. */
   const buildClient = (canvasId = null) => ({
@@ -296,9 +287,8 @@ describe("retroSubmitCallback", () => {
     );
   });
 
-  it("logs error when RETRO_CHANNEL_ID is not set", async () => {
-    delete process.env.RETRO_CHANNEL_ID;
-    const { retroSubmitCallback } = await loadModule();
+  it("logs error when retro channel is not configured", async () => {
+    const { retroSubmitCallback } = await loadModule(null);
     const ack = mock.fn(async () => {});
     const client = buildClient();
     const view = { state: { values: buildFakeValues() } };

@@ -1,23 +1,14 @@
 import assert from "node:assert/strict";
-import { afterEach, beforeEach, describe, it, mock } from "node:test";
+import { describe, it, mock } from "node:test";
 import esmock from "esmock";
 
 describe("appHomeOpenedCallback", () => {
-  const originalEnv = process.env.RETRO_CHANNEL_ID;
-
-  beforeEach(() => {
-    process.env.RETRO_CHANNEL_ID = "C999";
-  });
-
-  afterEach(() => {
-    if (originalEnv === undefined) {
-      delete process.env.RETRO_CHANNEL_ID;
-    } else {
-      process.env.RETRO_CHANNEL_ID = originalEnv;
-    }
-  });
-
-  const loadModule = () => esmock("../listeners/events/app-home-opened.js", {});
+  const loadModule = (channelId = "C999") =>
+    esmock("../listeners/events/app-home-opened.js", {
+      "../listeners/channel-store.js": {
+        getRetroChannel: () => channelId,
+      },
+    });
 
   /** Builds a mock client with configurable conversations.history. */
   const buildClient = () => ({
@@ -26,8 +17,12 @@ describe("appHomeOpenedCallback", () => {
   });
 
   /** Helper to call the callback and return the published blocks. */
-  const getPublishedBlocks = async (userId = "U123", client = null) => {
-    const { appHomeOpenedCallback } = await loadModule();
+  const getPublishedBlocks = async (
+    userId = "U123",
+    client = null,
+    channelId = "C999",
+  ) => {
+    const { appHomeOpenedCallback } = await loadModule(channelId);
     const c = client || buildClient();
     const event = { tab: "home", user: userId };
     const logger = { error: mock.fn() };
@@ -192,16 +187,15 @@ describe("appHomeOpenedCallback", () => {
       "Limited view should not include actions block",
     );
 
-    const configPrompt = blocks.find(
-      (b) => b.type === "section" && b.text?.text?.includes("configure"),
+    const invitePrompt = blocks.find(
+      (b) => b.type === "section" && b.text?.text?.includes("invite"),
     );
-    assert.ok(configPrompt, "Expected a prompt to configure the app");
+    assert.ok(invitePrompt, "Expected a prompt to invite the bot to a channel");
   });
 
-  it("shows limited view when RETRO_CHANNEL_ID is not set", async () => {
-    delete process.env.RETRO_CHANNEL_ID;
+  it("shows limited view when retro channel is not configured", async () => {
     const client = buildClient();
-    const { blocks } = await getPublishedBlocks("U123", client);
+    const { blocks } = await getPublishedBlocks("U123", client, null);
 
     const actionsBlock = blocks.find((b) => b.type === "actions");
     assert.equal(

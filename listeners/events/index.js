@@ -1,4 +1,5 @@
 import { appHomeOpenedCallback } from "./app-home-opened.js";
+import { memberJoinedChannelCallback } from "./member-joined-channel.js";
 
 /**
  * Registers all event listeners.
@@ -6,4 +7,5 @@ import { appHomeOpenedCallback } from "./app-home-opened.js";
  */
 export const register = (app) => {
   app.event("app_home_opened", appHomeOpenedCallback);
+  app.event("member_joined_channel", memberJoinedChannelCallback);
 };

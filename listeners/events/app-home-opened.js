@@ -1,3 +1,5 @@
+import { getRetroChannel } from "../channel-store.js";
+
 /**
  * Publishes the App Home tab with retrospective instructions.
  * Only fires for the "home" tab; other tabs are ignored.
@@ -9,7 +11,7 @@
 const appHomeOpenedCallback = async ({ client, event, logger }) => {
   if (event.tab !== "home") return;
 
-  const channelId = process.env.RETRO_CHANNEL_ID;
+  const channelId = getRetroChannel();
   let hasChannelAccess = false;
 
   if (channelId) {
@@ -103,7 +105,7 @@ const appHomeOpenedCallback = async ({ client, event, logger }) => {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: "To get started, ask a workspace admin to configure RetroRun with a retrospective channel.",
+          text: "To get started, invite RetroRun to a channel by typing `/invite @RetroRun` — the app will automatically use that channel for retrospectives.",
         },
       },
     );

@@ -1,3 +1,5 @@
+import { getRetroChannel } from "../channel-store.js";
+
 /** Maps mood values to display emoji. */
 const MOOD_EMOJI = {
   great: ":tada:",
@@ -138,10 +140,10 @@ export const retroSubmitCallback = async ({
 
   const retro = parseRetroValues(view.state.values);
   const userId = body.user.id;
-  const channel = process.env.RETRO_CHANNEL_ID;
+  const channel = getRetroChannel();
 
   if (!channel) {
-    logger.error("RETRO_CHANNEL_ID is not set");
+    logger.error("Retro channel is not configured");
     return;
   }
 

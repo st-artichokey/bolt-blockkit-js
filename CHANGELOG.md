@@ -1,5 +1,16 @@
 # Changelog
 
+## feat: Auto-discover retro channel when bot is added
+
+- Created `channel-store.js` shared module for retro channel and bot user ID state
+- Added `member_joined_channel` event handler — when the bot is added to a channel, it automatically uses that channel for retrospectives
+- Updated `app.js` to call `auth.test()` on startup and store the bot's own user ID
+- Replaced `process.env.RETRO_CHANNEL_ID` direct reads in `app-home-opened.js` and `retro-submit.js` with `getRetroChannel()` from channel-store (env var remains as fallback)
+- Updated App Home limited view to guide users to `/invite @RetroRun` instead of asking an admin to configure
+- Added `member_joined_channel` to manifest `bot_events`
+- Updated all tests to mock `channel-store` instead of env vars
+- Total tests: 51
+
 ## fix: Pre-merge cleanup — stale docs, unused test helpers, cache recovery
 
 - Updated README.md to reflect canvas output, removed references to deleted files and features
