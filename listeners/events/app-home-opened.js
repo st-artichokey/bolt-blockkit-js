@@ -23,8 +23,20 @@ const appHomeOpenedCallback = async ({ client, event, logger }) => {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: "Collect and review team feedback using interactive Block Kit forms.",
+              text: `Hey <@${event.user}>! Collect and review team feedback using interactive retrospective forms.`,
             },
+          },
+          { type: "divider" },
+          {
+            type: "actions",
+            elements: [
+              {
+                type: "button",
+                text: { type: "plain_text", text: "Start Retrospective" },
+                action_id: "start_retro_home",
+                style: "primary",
+              },
+            ],
           },
           { type: "divider" },
           {
@@ -32,31 +44,11 @@ const appHomeOpenedCallback = async ({ client, event, logger }) => {
             text: {
               type: "mrkdwn",
               text: [
-                "*How to start a retro:*",
+                "*How it works:*",
                 "",
-                "1. Use the global shortcut *Start Retrospective* (search in the shortcuts menu)",
+                '1. Click *Start Retrospective* above — or search "Start Retrospective" in the shortcuts menu (the lightning bolt icon)',
                 "2. Fill out the form with your sprint feedback",
                 "3. A summary is posted to the retro channel for the team to review",
-              ].join("\n"),
-            },
-          },
-          { type: "divider" },
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: [
-                "*Block Kit elements demonstrated:*",
-                "",
-                ":small_blue_diamond: Plain-text inputs (single & multi-line)",
-                ":small_blue_diamond: Static select menus",
-                ":small_blue_diamond: Datepicker",
-                ":small_blue_diamond: Radio buttons",
-                ":small_blue_diamond: Checkboxes",
-                ":small_blue_diamond: Modals with submission handling",
-                ":small_blue_diamond: Header, section, divider, and context blocks",
-                ":small_blue_diamond: Actions block with buttons and overflow menus",
-                ":small_blue_diamond: Chained modals (Add Comment)",
               ].join("\n"),
             },
           },
@@ -66,7 +58,16 @@ const appHomeOpenedCallback = async ({ client, event, logger }) => {
             elements: [
               {
                 type: "mrkdwn",
-                text: "Built with :slack: Bolt for JavaScript and Block Kit",
+                text: "This app uses AI-assisted automation to help facilitate retrospectives.",
+              },
+            ],
+          },
+          {
+            type: "context",
+            elements: [
+              {
+                type: "mrkdwn",
+                text: "Built with Bolt for JavaScript and Block Kit",
               },
             ],
           },

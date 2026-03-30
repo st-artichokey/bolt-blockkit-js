@@ -1,5 +1,32 @@
 # Changelog
 
+## feat: Update manifest for Slack marketplace compliance
+
+- Renamed app from "bolt-blockkit-retro" to "Retro Recap App"
+- Shortened description to fit 10-word marketplace limit
+- Added `long_description` with detailed feature overview
+- Added `background_color` (#4A154B — Slack aubergine)
+- Updated `bot_user.display_name` to match app name
+- Added 5 manifest validation tests (TDD)
+- Total tests: 29
+
+## fix: Use user-friendly language for shortcuts menu reference
+
+- Replaced "global shortcut" jargon with discoverable instruction: search "Start Retrospective" in the shortcuts menu (lightning bolt icon)
+- Added test asserting user-friendly language and no jargon
+- Total tests: 24
+
+## feat: Update App Home to comply with Slack guidelines
+
+- Added personalized greeting with user mention
+- Added "Start Retrospective" button in actions block on App Home
+- Added AI disclosure context block (Slack marketplace requirement)
+- Removed developer-facing "Block Kit elements demonstrated" section
+- Created `startRetroHomeCallback` action handler reusing `buildRetroModal()`
+- Registered `start_retro_home` action in actions/index.js
+- Added 7 new tests (TDD): greeting, button, AI disclosure, no dev content, action handler
+- Total tests: 23
+
 ## refactor: Move session logs to claude-notes/logs and remove .env.example
 
 - Renamed `claude-session-logs/` to `claude-notes/logs/` to match emoji-tr-app directory structure
