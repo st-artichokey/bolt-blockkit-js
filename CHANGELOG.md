@@ -1,5 +1,9 @@
 # Changelog
 
+## fix: Replace placeholder repo URL in README
+
+- Replaced `<repo-url>` with actual GitHub clone URL
+
 ## fix: Remove template remnants and fix manifest scopes
 
 - Removed unused `commands` scope from manifest (no slash commands in the app)

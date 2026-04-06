@@ -32,7 +32,7 @@ On submission, a rich Block Kit message is posted to a configured channel with a
 
 1. **Clone and install**
    ```bash
-   git clone <repo-url>
+   git clone https://github.com/st-artichokey/bolt-blockkit-js.git
    cd retro-recap-app
    npm install
    ```
