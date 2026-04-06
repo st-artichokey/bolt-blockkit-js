@@ -28,3 +28,35 @@ export const getBotUserId = () => botUserId;
 export const setBotUserId = (userId) => {
   botUserId = userId;
 };
+
+/**
+ * Queries the Slack API to find public channels the bot is a member of
+ * and sets the retro channel. Called on startup to recover channel state.
+ * @param {import('@slack/bolt').WebClient} client - Slack Web API client.
+ * @param {object} logger - Bolt logger instance.
+ */
+export const discoverRetroChannel = async (client, logger) => {
+  try {
+    const result = await client.users.conversations({
+      types: "public_channel",
+      exclude_archived: true,
+      limit: 100,
+    });
+    const channels = result.channels || [];
+    if (channels.length === 1) {
+      setRetroChannel(channels[0].id);
+      logger.info(`Auto-discovered retro channel: ${channels[0].id}`);
+    } else if (channels.length > 1) {
+      setRetroChannel(channels[0].id);
+      logger.warn(
+        `Bot is in ${channels.length} channels, using first: ${channels[0].id}`,
+      );
+    } else {
+      logger.warn(
+        "Bot is not in any channels — invite it with /invite @RetroRun",
+      );
+    }
+  } catch (error) {
+    logger.error("Failed to discover retro channel on startup", error);
+  }
+};

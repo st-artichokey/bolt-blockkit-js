@@ -11,6 +11,14 @@
 - Added interactivity guide link to README Resources section (shortcuts, modals, action handling)
 - Added interactivity guide link to CONTRIBUTING.md AI review checklist for verifying API methods
 
+## feat: Auto-discover retro channel on startup
+
+- Added `discoverRetroChannel()` in `channel-store.js` — queries `users.conversations` on startup to find public channels the bot is already in
+- Handles single channel (sets it), multiple channels (uses first, warns), no channels (warns), and API errors (logs, continues)
+- Called in `app.js` after `auth.test()` so the retro channel survives app restarts
+- Added 4 tests (TDD): one channel, multiple channels, no channels, API error
+- Total tests: 61
+
 ## fix: Remove stale RETRO_CHANNEL_ID env var fallback
 
 - Removed `process.env.RETRO_CHANNEL_ID` fallback from `getRetroChannel()` — the env var was causing `channel_not_found` errors when set to a stale value
