@@ -1,5 +1,12 @@
 # Changelog
 
+## refactor: Rename package to retro-recap-app and update dependencies
+
+- Renamed npm package from `bolt-blockkit-js` to `retro-recap-app` in package.json, CLAUDE.md, and README
+- Updated `dotenv` from ~17.3.1 to ^17.4.1
+- Updated `@biomejs/biome` from ^2.4.4 to ^2.4.10
+- All 29 tests pass
+
 ## docs: Update README to reflect current app features
 
 - Renamed heading to "Retro Recap App" to match manifest
