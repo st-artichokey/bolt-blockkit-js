@@ -4,8 +4,6 @@
 
 - Removed session logs section (internal Claude Code convention, not for developers)
 - Made TDD steps tool-agnostic instead of AI-centric
-- Changed Co-Authored-By from a requirement to a suggestion
-
 ## docs: Add CONTRIBUTING.md and clean up project configuration
 
 - Added `CONTRIBUTING.md` with guidelines for AI-assisted and traditional contributors

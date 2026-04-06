@@ -66,7 +66,7 @@ If you're using Claude Code, Copilot, or another AI tool to assist with contribu
 
 ### Be transparent
 
-- Indicate AI assistance in your commit messages (e.g., a `Co-Authored-By` trailer or a note in the message body)
+- Include a `Co-Authored-By` trailer in your commit messages to indicate AI assistance
 - In your PR description, note which parts were AI-assisted if it's not the entire change
 
 ### Review AI output critically
