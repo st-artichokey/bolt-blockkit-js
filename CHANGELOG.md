@@ -1,5 +1,13 @@
 # Changelog
 
+## docs: Add CONTRIBUTING.md with AI and non-AI contributor guidelines
+
+- Created contributing guide covering setup, TDD workflow, code conventions, and PR process
+- Added dedicated section for AI-assisted contributors: transparency, review practices, TDD discipline
+- Added section for non-AI contributors including tips for reviewing AI-assisted PRs
+- Included guidance on adding new Block Kit elements
+- Committed untracked `.slack/` config files (`.gitignore`, `apps.json`, `hooks.json`)
+
 ## feat: Update manifest for Slack marketplace compliance
 
 - Renamed app from "bolt-blockkit-retro" to "Retro Recap App"
