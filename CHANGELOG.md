@@ -2,7 +2,7 @@
 
 ## feat: Send confirmation message to Messages tab after retro submission
 
-- After a successful canvas write, a confirmation message is sent to the user's Messages tab: "Your retrospective "title" was submitted to the retro channel."
+- After a successful canvas write, a confirmation message is sent to the user's Messages tab with a link to the retro channel
 - Confirmation is not sent if the canvas write fails or the channel is not configured
 - Confirmation is skipped on canvas failure, but DM copy still sends if the user requested it
 - Added 4 tests (TDD): confirmation on success, not on canvas failure, DM copy still sends on canvas failure, not on unconfigured channel

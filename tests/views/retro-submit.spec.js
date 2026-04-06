@@ -384,10 +384,14 @@ describe("retroSubmitCallback", () => {
     await retroSubmitCallback({ ack, view, body, client, logger });
 
     const confirmationCall = client.chat.postMessage.mock.calls.find(
-      (call) => call.arguments[0].text.includes("submitted"),
+      (call) => call.arguments[0].text.includes("was submitted to"),
     );
     assert.ok(confirmationCall, "Should send a confirmation message");
     assert.equal(confirmationCall.arguments[0].channel, "U456");
+    assert.ok(
+      confirmationCall.arguments[0].text.includes("<#C999>"),
+      "Confirmation should link to the retro channel",
+    );
   });
 
   it("does not send confirmation when canvas write fails", async () => {
@@ -404,7 +408,7 @@ describe("retroSubmitCallback", () => {
     await retroSubmitCallback({ ack, view, body, client, logger });
 
     const confirmationCall = client.chat.postMessage.mock.calls.find(
-      (call) => call.arguments[0].text.includes("submitted"),
+      (call) => call.arguments[0].text.includes("was submitted to"),
     );
     assert.equal(
       confirmationCall,

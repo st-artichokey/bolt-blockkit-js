@@ -244,7 +244,7 @@ export const retroSubmitCallback = async ({
     try {
       await client.chat.postMessage({
         channel: userId,
-        text: `Your retrospective "${retro.title}" was submitted to the retro channel.`,
+        text: `Your retrospective "${retro.title}" was submitted to <#${channel}>.`,
       });
     } catch (error) {
       logger.error("Failed to send submission confirmation", error);
