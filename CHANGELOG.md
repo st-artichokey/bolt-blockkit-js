@@ -1,5 +1,9 @@
 # Changelog
 
+## docs: Add Resources section to README with Slack API links
+
+- Added links to Slack API docs, Block Kit reference, Block Kit Builder, Bolt docs, CLI docs, and manifest schema
+
 ## fix: Untrack machine-specific files
 
 - Removed `.claude/settings.local.json` from git (local Claude Code permissions)

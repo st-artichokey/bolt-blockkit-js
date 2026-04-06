@@ -89,6 +89,15 @@ On submission, a rich Block Kit message is posted to a configured channel with a
 - **Linter:** [Biome](https://biomejs.dev)
 - **Testing:** Node.js built-in test runner + [esmock](https://github.com/iambumblehead/esmock)
 
+## Resources
+
+- [Slack API documentation](https://api.slack.com)
+- [Block Kit reference](https://api.slack.com/reference/block-kit)
+- [Block Kit Builder](https://app.slack.com/block-kit-builder) — interactive prototyping tool
+- [Bolt for JavaScript documentation](https://slack.dev/bolt-js)
+- [Slack CLI documentation](https://api.slack.com/automation/cli)
+- [App manifest schema](https://api.slack.com/reference/manifests)
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, workflow, and guidelines for both AI-assisted and traditional contributors.
