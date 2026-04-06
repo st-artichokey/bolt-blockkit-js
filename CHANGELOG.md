@@ -1,5 +1,10 @@
 # Changelog
 
+## fix: Clarify TDD discipline section in CONTRIBUTING.md
+
+- Reworded ambiguous "Don't:" phrasing that made the correct TDD steps read as things to avoid
+- Bolded "fails" and "pass" to emphasize the red-green cycle
+
 ## refactor: Rename package to retro-recap-app and update dependencies
 
 - Renamed npm package from `bolt-blockkit-js` to `retro-recap-app` in package.json, CLAUDE.md, and README

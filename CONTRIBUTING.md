@@ -78,12 +78,12 @@ If you're using Claude Code, Copilot, or another AI tool to assist with contribu
 
 ### Maintain TDD discipline
 
-AI tools can make it tempting to skip the "red" phase of red-green-refactor. Don't:
+AI tools can make it tempting to skip the "red" phase of red-green-refactor. Don't skip it. Always follow the full cycle:
 
 1. Have the AI write the test first
-2. Run `npm test` and confirm the test fails
+2. Run `npm test` and confirm the new test **fails**
 3. Then implement — whether by hand or with AI help
-4. Run tests again to confirm they pass
+4. Run tests again to confirm they **pass**
 
 ### Don't over-generate
 
