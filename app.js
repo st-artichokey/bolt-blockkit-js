@@ -9,7 +9,7 @@ const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
   socketMode: true,
   appToken: process.env.SLACK_APP_TOKEN,
-  logLevel: LogLevel.DEBUG,
+  logLevel: process.env.LOG_LEVEL === "debug" ? LogLevel.DEBUG : LogLevel.INFO,
 });
 
 registerListeners(app);

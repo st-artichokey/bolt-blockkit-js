@@ -1,5 +1,18 @@
 # Changelog
 
+## docs: Add CONTRIBUTING.md and clean up project configuration
+
+- Added `CONTRIBUTING.md` with guidelines for AI-assisted and traditional contributors
+- Renamed npm package from `bolt-blockkit-js` to `retrorun` to match app display name
+- Updated `CLAUDE.md` heading to match package name
+- Rewrote `README.md`: RetroRun branding, canvas output docs, auto-channel discovery, project structure, env vars, Resources section, contributing link
+- Added missing `@returns {void}` JSDoc tags to all register functions
+- Removed unused `commands` scope and redundant `messages_tab_read_only_enabled` from manifest
+- Made log level configurable via `LOG_LEVEL` env var (defaults to INFO)
+- Added `.claude/settings.local.json` to `.gitignore`
+- Updated `dotenv` from ~17.3.1 to ^17.4.1
+- All 54 tests pass
+
 ## fix: Validate modal fields, verify action wiring, gitignore .slack/
 
 - Added `requireField` helper to `parseRetroValues` — throws descriptive errors (e.g., "Missing required field: retro_title_block.retro_title.value") instead of opaque TypeErrors on malformed payloads

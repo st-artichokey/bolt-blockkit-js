@@ -1,4 +1,4 @@
-# bolt-blockkit-js
+# retrorun
 
 A Slack Bolt app demonstrating Block Kit UI for team retrospectives.
 
