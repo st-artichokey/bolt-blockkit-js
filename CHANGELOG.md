@@ -1,5 +1,11 @@
 # Changelog
 
+## fix: Untrack machine-specific files
+
+- Removed `.claude/settings.local.json` from git (local Claude Code permissions)
+- Removed `.slack/config.json` from git (per-developer project ID, already in `.slack/.gitignore` but was tracked)
+- Added `.claude/settings.local.json` to root `.gitignore`
+
 ## fix: Add missing @returns {void} JSDoc tags to register functions
 
 - Added `@returns {void}` to all 5 `register()` exports and `registerListeners()`
