@@ -11,6 +11,14 @@
 - Added interactivity guide link to README Resources section (shortcuts, modals, action handling)
 - Added interactivity guide link to CONTRIBUTING.md AI review checklist for verifying API methods
 
+## fix: Remove stale RETRO_CHANNEL_ID env var fallback
+
+- Removed `process.env.RETRO_CHANNEL_ID` fallback from `getRetroChannel()` — the env var was causing `channel_not_found` errors when set to a stale value
+- Auto-discovery via `member_joined_channel` is now the sole mechanism for setting the retro channel
+- Removed `RETRO_CHANNEL_ID` from README env var docs and `.env`
+- Updated channel-store tests to remove env var references
+- Total tests: 57 (removed 1 env var fallback test)
+
 ## fix: Add missing commands scope for global shortcut
 
 - Added `commands` bot scope — required for the "Start Retrospective" global shortcut to appear in Slack

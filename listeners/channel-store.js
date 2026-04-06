@@ -2,11 +2,10 @@ let retroChannelId = null;
 let botUserId = null;
 
 /**
- * Returns the retro channel ID, falling back to the RETRO_CHANNEL_ID env var.
- * @returns {string|null} The channel ID or null if not configured.
+ * Returns the retro channel ID, set via auto-discovery when the bot joins a channel.
+ * @returns {string|null} The channel ID or null if not yet discovered.
  */
-export const getRetroChannel = () =>
-  retroChannelId || process.env.RETRO_CHANNEL_ID || null;
+export const getRetroChannel = () => retroChannelId;
 
 /**
  * Stores the retro channel ID.
