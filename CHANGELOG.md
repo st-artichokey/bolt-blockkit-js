@@ -1,5 +1,11 @@
 # Changelog
 
+## fix: Restore .slack/hooks.json for Slack CLI app startup
+
+- Restored `.slack/hooks.json` — the Slack CLI bootstrap file that was accidentally deleted when `.slack/` was added to `.gitignore`
+- Replaced blanket `.slack/` gitignore with a selective `.slack/.gitignore` that only ignores machine-specific files (`apps.dev.json`, `cache/`, `config.json`)
+- Without `hooks.json`, `slack run` cannot discover how to start the app
+
 ## docs: Add Slack interactivity guide link to README and CONTRIBUTING
 
 - Added interactivity guide link to README Resources section (shortcuts, modals, action handling)
