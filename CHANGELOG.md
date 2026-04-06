@@ -1,5 +1,11 @@
 # Changelog
 
+## fix: Clean up manifest — remove unused scope, enable Messages tab
+
+- Removed unused `chat:write.public` scope (app only writes canvases to the retro channel, not messages)
+- Enabled `messages_tab_enabled` in App Home — confirmation messages and DM copies are delivered to the Messages tab, so it should be visible to users
+- All 58 tests pass
+
 ## feat: Send confirmation message to Messages tab after retro submission
 
 - After a successful canvas write, a confirmation message is sent to the user's Messages tab with a link to the retro channel
