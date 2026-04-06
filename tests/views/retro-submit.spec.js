@@ -359,7 +359,7 @@ describe("retroSubmitCallback", () => {
     );
   });
 
-  it("logs error when retro channel is not configured", async () => {
+  it("sends error message to user when retro channel is not configured", async () => {
     const { retroSubmitCallback } = await loadModule(null);
     const ack = mock.fn(async () => {});
     const client = buildClient();
@@ -371,6 +371,17 @@ describe("retroSubmitCallback", () => {
 
     assert.equal(client.conversations.canvases.create.mock.calls.length, 0);
     assert.equal(logger.error.mock.calls.length, 1);
+    assert.equal(
+      client.chat.postMessage.mock.calls.length,
+      1,
+      "Should send an error message to the user",
+    );
+    const errorMsg = client.chat.postMessage.mock.calls[0].arguments[0];
+    assert.equal(errorMsg.channel, "U456");
+    assert.ok(
+      errorMsg.text.includes("/invite @RetroRun"),
+      "Error message should tell user how to fix it",
+    );
   });
 
   it("sends confirmation message to user on successful submission", async () => {
@@ -444,7 +455,7 @@ describe("retroSubmitCallback", () => {
     assert.ok(copyCall.blocks, "Message should include Block Kit blocks");
   });
 
-  it("does not send confirmation when channel is not configured", async () => {
+  it("sends only the error message when channel is not configured", async () => {
     const { retroSubmitCallback } = await loadModule(null);
     const ack = mock.fn(async () => {});
     const client = buildClient();
@@ -456,8 +467,14 @@ describe("retroSubmitCallback", () => {
 
     assert.equal(
       client.chat.postMessage.mock.calls.length,
-      0,
-      "Should not send any messages when channel is not configured",
+      1,
+      "Should only send the error message, not confirmation or copy",
+    );
+    assert.ok(
+      client.chat.postMessage.mock.calls[0].arguments[0].text.includes(
+        "/invite @RetroRun",
+      ),
+      "The only message should be the error with setup instructions",
     );
   });
 });

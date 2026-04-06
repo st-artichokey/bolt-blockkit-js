@@ -11,6 +11,13 @@
 - Added interactivity guide link to README Resources section (shortcuts, modals, action handling)
 - Added interactivity guide link to CONTRIBUTING.md AI review checklist for verifying API methods
 
+## fix: Send user-facing error when retro channel is not configured
+
+- When `getRetroChannel()` returns null during submission, the user now receives a message explaining the issue and how to fix it (`/invite @RetroRun`)
+- Previously the modal closed silently with only a server-side log
+- Updated 2 existing tests to assert the error message is sent
+- Total tests: 61
+
 ## feat: Auto-discover retro channel on startup
 
 - Added `discoverRetroChannel()` in `channel-store.js` — queries `users.conversations` on startup to find public channels the bot is already in

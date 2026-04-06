@@ -227,6 +227,14 @@ export const retroSubmitCallback = async ({
 
   if (!channel) {
     logger.error("Retro channel is not configured");
+    try {
+      await client.chat.postMessage({
+        channel: userId,
+        text: "Your retrospective couldn't be saved — RetroRun isn't in a channel yet. Ask a workspace admin to type `/invite @RetroRun` in a channel, then try again.",
+      });
+    } catch (error) {
+      logger.error("Failed to send setup error to user", error);
+    }
     return;
   }
 
