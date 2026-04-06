@@ -1,20 +1,32 @@
-# bolt-blockkit-js
+# Retro Recap App
 
-A Slack Bolt app that demonstrates [Block Kit](https://api.slack.com/block-kit) UI capabilities through an interactive team retrospective workflow. Built for use with the [Slack CLI](https://api.slack.com/automation/cli).
+A Slack Bolt app for running team sprint retrospectives directly in Slack. Built with [Block Kit](https://api.slack.com/block-kit) and the [Slack CLI](https://api.slack.com/automation/cli).
 
 ## What it does
 
-Teams use a global shortcut to open a retrospective form, fill in sprint feedback, and post a structured summary to a channel. The app showcases a wide range of Block Kit elements:
+Team members open a retrospective form — via global shortcut or the App Home — fill in sprint feedback, and a rich summary is posted to a channel for the team to review and discuss.
 
-- **Plain-text inputs** — single-line and multi-line
-- **Static select menu** — sprint/iteration picker
-- **Datepicker** — sprint end date
-- **Radio buttons** — team mood selector
-- **Checkboxes** — focus area categories
-- **Modals** — form collection with submission handling
-- **Chained modals** — "Add Comment" opens a secondary modal
-- **Actions block** — buttons and overflow menus
-- **Header, section, divider, and context blocks** — rich message layout
+### App Home
+
+A personalized landing page with a greeting, a **Start Retrospective** button, and step-by-step instructions. Includes an AI disclosure for Slack marketplace compliance.
+
+### Retrospective form
+
+A Block Kit modal collecting:
+
+- **Retro title** — plain-text input
+- **Sprint / Iteration** — static select menu
+- **Sprint end date** — datepicker
+- **What went well / didn't / action items** — multi-line text inputs
+- **Team mood** — radio buttons (Great, OK, Tough)
+- **Focus areas** — checkboxes (Communication, Process, Tooling, Team Dynamics)
+
+### Summary post
+
+On submission, a rich Block Kit message is posted to a configured channel with all the feedback, mood emoji, and focus area tags. The message includes:
+
+- **Add Comment** button — opens a chained modal that posts a threaded reply
+- **Overflow menu** — pin the summary to the channel or bookmark it (sends a DM with a link)
 
 ## Getting started
 
@@ -26,9 +38,12 @@ Teams use a global shortcut to open a retrospective form, fill in sprint feedbac
    ```
 
 2. **Configure environment**
-   ```bash
-   cp .env.example .env
-   # Fill in your Slack tokens and channel ID
+
+   Create a `.env` file in the project root with:
+   ```
+   SLACK_BOT_TOKEN=xoxb-...
+   SLACK_APP_TOKEN=xapp-...
+   RETRO_CHANNEL_ID=C...
    ```
 
 3. **Run locally** (Socket Mode)
@@ -63,8 +78,8 @@ Teams use a global shortcut to open a retrospective form, fill in sprint feedbac
 │   │   ├── retro-submit.js         # Modal submission → channel post
 │   │   └── add-comment-submit.js   # Chained modal for comments
 │   └── actions/
-│       └── retro-actions.js        # Button and overflow actions
-└── tests/                          # Unit tests (Node.js test runner + esmock)
+│       └── retro-actions.js        # Button, overflow, and App Home actions
+└── tests/                          # 29 unit tests (Node.js test runner + esmock)
 ```
 
 ## Tech stack
@@ -73,3 +88,7 @@ Teams use a global shortcut to open a retrospective form, fill in sprint feedbac
 - **Framework:** [@slack/bolt](https://slack.dev/bolt-js) v4
 - **Linter:** [Biome](https://biomejs.dev)
 - **Testing:** Node.js built-in test runner + [esmock](https://github.com/iambumblehead/esmock)
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, workflow, and guidelines for both AI-assisted and traditional contributors.

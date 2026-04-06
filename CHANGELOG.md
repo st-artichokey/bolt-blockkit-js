@@ -1,5 +1,13 @@
 # Changelog
 
+## docs: Update README to reflect current app features
+
+- Renamed heading to "Retro Recap App" to match manifest
+- Added App Home, retrospective form, and summary post as distinct subsections
+- Replaced `.env.example` copy step with inline `.env` variable listing
+- Updated project structure to note 29 tests and App Home actions
+- Added link to CONTRIBUTING.md
+
 ## docs: Add CONTRIBUTING.md with AI and non-AI contributor guidelines
 
 - Created contributing guide covering setup, TDD workflow, code conventions, and PR process
