@@ -258,9 +258,14 @@ describe("retroSubmitCallback", () => {
 
     await retroSubmitCallback({ ack, view, body, client, logger });
 
-    assert.equal(client.chat.postMessage.mock.calls.length, 1);
-    const dmCall = client.chat.postMessage.mock.calls[0].arguments[0];
-    assert.equal(dmCall.channel, "U456");
+    assert.equal(
+      client.chat.postMessage.mock.calls.length,
+      2,
+      "Should send confirmation + copy",
+    );
+    const copyCall = client.chat.postMessage.mock.calls[1].arguments[0];
+    assert.equal(copyCall.channel, "U456");
+    assert.ok(copyCall.blocks, "Copy message should include Block Kit blocks");
   });
 
   it("does not send copy when checkbox not selected", async () => {
@@ -273,7 +278,16 @@ describe("retroSubmitCallback", () => {
 
     await retroSubmitCallback({ ack, view, body, client, logger });
 
-    assert.equal(client.chat.postMessage.mock.calls.length, 0);
+    assert.equal(
+      client.chat.postMessage.mock.calls.length,
+      1,
+      "Should only send confirmation, not a copy",
+    );
+    const call = client.chat.postMessage.mock.calls[0].arguments[0];
+    assert.ok(
+      call.text.includes("submitted"),
+      "The only message should be the confirmation",
+    );
   });
 
   it("creates a new canvas when edit fails with stale cache", async () => {
@@ -357,5 +371,59 @@ describe("retroSubmitCallback", () => {
 
     assert.equal(client.conversations.canvases.create.mock.calls.length, 0);
     assert.equal(logger.error.mock.calls.length, 1);
+  });
+
+  it("sends confirmation message to user on successful submission", async () => {
+    const { retroSubmitCallback } = await loadModule();
+    const ack = mock.fn(async () => {});
+    const client = buildClient();
+    const view = { state: { values: buildFakeValues() } };
+    const body = { user: { id: "U456" } };
+    const logger = { error: mock.fn() };
+
+    await retroSubmitCallback({ ack, view, body, client, logger });
+
+    const confirmationCall = client.chat.postMessage.mock.calls.find(
+      (call) => call.arguments[0].text.includes("submitted"),
+    );
+    assert.ok(confirmationCall, "Should send a confirmation message");
+    assert.equal(confirmationCall.arguments[0].channel, "U456");
+  });
+
+  it("does not send confirmation when canvas write fails", async () => {
+    const { retroSubmitCallback } = await loadModule();
+    const ack = mock.fn(async () => {});
+    const client = buildClient();
+    client.conversations.canvases.create = mock.fn(async () => {
+      throw new Error("canvas_error");
+    });
+    const view = { state: { values: buildFakeValues() } };
+    const body = { user: { id: "U456" } };
+    const logger = { error: mock.fn() };
+
+    await retroSubmitCallback({ ack, view, body, client, logger });
+
+    assert.equal(
+      client.chat.postMessage.mock.calls.length,
+      0,
+      "Should not send any messages when canvas write fails",
+    );
+  });
+
+  it("does not send confirmation when channel is not configured", async () => {
+    const { retroSubmitCallback } = await loadModule(null);
+    const ack = mock.fn(async () => {});
+    const client = buildClient();
+    const view = { state: { values: buildFakeValues() } };
+    const body = { user: { id: "U456" } };
+    const logger = { error: mock.fn() };
+
+    await retroSubmitCallback({ ack, view, body, client, logger });
+
+    assert.equal(
+      client.chat.postMessage.mock.calls.length,
+      0,
+      "Should not send any messages when channel is not configured",
+    );
   });
 });
