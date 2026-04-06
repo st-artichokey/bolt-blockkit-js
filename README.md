@@ -98,6 +98,7 @@ When the bot is added to a channel, it automatically uses that channel for retro
 - [Block Kit reference](https://api.slack.com/reference/block-kit)
 - [Block Kit Builder](https://app.slack.com/block-kit-builder) — interactive prototyping tool
 - [Bolt for JavaScript documentation](https://slack.dev/bolt-js)
+- [Interactivity guide](https://docs.slack.dev/interactivity/implementing-shortcuts) — shortcuts, modals, and action handling
 - [Slack CLI documentation](https://api.slack.com/automation/cli)
 - [App manifest schema](https://api.slack.com/reference/manifests)
 

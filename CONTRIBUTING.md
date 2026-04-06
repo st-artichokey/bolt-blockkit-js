@@ -74,7 +74,7 @@ If you're using Claude Code, Copilot, or another AI tool to assist with contribu
 - **Read every line** the AI generates before committing. AI can produce plausible-looking code that has subtle bugs or doesn't match project conventions
 - **Verify Block Kit payloads** — AI may generate block structures that look correct but use invalid combinations of fields. Test them in [Block Kit Builder](https://app.slack.com/block-kit-builder) when possible
 - **Check imports** — AI sometimes invents module paths or exports that don't exist. Confirm that all imports resolve
-- **Watch for hallucinated APIs** — Bolt's API surface is specific. If the AI suggests a method you haven't seen before, verify it in the [Bolt docs](https://slack.dev/bolt-js)
+- **Watch for hallucinated APIs** — Bolt's API surface is specific. If the AI suggests a method you haven't seen before, verify it in the [Bolt docs](https://slack.dev/bolt-js) or the [interactivity guide](https://docs.slack.dev/interactivity/implementing-shortcuts)
 
 ### Maintain TDD discipline
 

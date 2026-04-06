@@ -1,5 +1,10 @@
 # Changelog
 
+## docs: Add Slack interactivity guide link to README and CONTRIBUTING
+
+- Added interactivity guide link to README Resources section (shortcuts, modals, action handling)
+- Added interactivity guide link to CONTRIBUTING.md AI review checklist for verifying API methods
+
 ## fix: Add missing commands scope for global shortcut
 
 - Added `commands` bot scope — required for the "Start Retrospective" global shortcut to appear in Slack
