@@ -72,7 +72,7 @@ If you're using Claude Code, Copilot, or another AI tool to assist with contribu
 ### Review AI output critically
 
 - **Read every line** the AI generates before committing. AI can produce plausible-looking code that has subtle bugs or doesn't match project conventions
-- **Verify Block Kit payloads** — AI may generate block structures that look correct but use invalid combinations of fields. Test them in [Block Kit Builder](https://app.slack.com/block-kit-builder) when possible
+- **Verify Block Kit payloads** — AI may generate block structures that look correct but use invalid combinations of fields. Block Kit JSON is defined inline in the listener files (e.g., modal blocks in `listeners/shortcuts/start-retro.js`, summary blocks in `listeners/views/retro-submit.js`, App Home blocks in `listeners/events/app-home-opened.js`). To verify, copy the `blocks` array from the code and paste it into [Block Kit Builder](https://app.slack.com/block-kit-builder) — it will preview the output and flag any structural errors
 - **Check imports** — AI sometimes invents module paths or exports that don't exist. Confirm that all imports resolve
 - **Watch for hallucinated APIs** — Bolt's API surface is specific. If the AI suggests a method you haven't seen before, verify it in the [Bolt docs](https://slack.dev/bolt-js)
 

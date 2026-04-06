@@ -1,5 +1,9 @@
 # Changelog
 
+## docs: Explain how to verify Block Kit payloads in CONTRIBUTING.md
+
+- Expanded the "Verify Block Kit payloads" guidance with where block JSON lives in the codebase and how to use Block Kit Builder to check it
+
 ## fix: Remove Claude-specific conventions from CONTRIBUTING.md
 
 - Removed session logs section (internal Claude Code convention, not for developers)
