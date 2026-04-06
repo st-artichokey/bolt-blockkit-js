@@ -4,10 +4,10 @@
 
 - After a successful canvas write, a confirmation message is sent to the user's Messages tab: "Your retrospective "title" was submitted to the retro channel."
 - Confirmation is not sent if the canvas write fails or the channel is not configured
-- Added early return on canvas write failure so DM copy is also skipped on error
-- Added 3 tests (TDD): confirmation sent on success, not sent on canvas failure, not sent when channel unconfigured
+- Confirmation is skipped on canvas failure, but DM copy still sends if the user requested it
+- Added 4 tests (TDD): confirmation on success, not on canvas failure, DM copy still sends on canvas failure, not on unconfigured channel
 - Updated 2 existing tests to account for the new confirmation message
-- Total tests: 57
+- Total tests: 58
 
 ## fix: Remove Claude-specific conventions from CONTRIBUTING.md
 

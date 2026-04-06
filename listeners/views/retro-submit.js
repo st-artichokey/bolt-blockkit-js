@@ -232,20 +232,23 @@ export const retroSubmitCallback = async ({
 
   const markdown = buildRetroMarkdown(retro, userId);
 
+  let canvasWriteSucceeded = false;
   try {
     await writeToCanvas(client, channel, markdown);
+    canvasWriteSucceeded = true;
   } catch (error) {
     logger.error("Failed to write retro to canvas", error);
-    return;
   }
 
-  try {
-    await client.chat.postMessage({
-      channel: userId,
-      text: `Your retrospective "${retro.title}" was submitted to the retro channel.`,
-    });
-  } catch (error) {
-    logger.error("Failed to send submission confirmation", error);
+  if (canvasWriteSucceeded) {
+    try {
+      await client.chat.postMessage({
+        channel: userId,
+        text: `Your retrospective "${retro.title}" was submitted to the retro channel.`,
+      });
+    } catch (error) {
+      logger.error("Failed to send submission confirmation", error);
+    }
   }
 
   const dmSelected =

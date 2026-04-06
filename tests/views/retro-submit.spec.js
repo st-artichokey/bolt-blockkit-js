@@ -403,11 +403,41 @@ describe("retroSubmitCallback", () => {
 
     await retroSubmitCallback({ ack, view, body, client, logger });
 
+    const confirmationCall = client.chat.postMessage.mock.calls.find(
+      (call) => call.arguments[0].text.includes("submitted"),
+    );
+    assert.equal(
+      confirmationCall,
+      undefined,
+      "Should not send confirmation when canvas write fails",
+    );
+  });
+
+  it("still sends DM copy when canvas write fails and checkbox selected", async () => {
+    const { retroSubmitCallback } = await loadModule();
+    const ack = mock.fn(async () => {});
+    const client = buildClient();
+    client.conversations.canvases.create = mock.fn(async () => {
+      throw new Error("canvas_error");
+    });
+    const values = buildFakeValues({
+      dm_summary_block: {
+        dm_summary: { selected_options: [{ value: "send_copy" }] },
+      },
+    });
+    const view = { state: { values } };
+    const body = { user: { id: "U456" } };
+    const logger = { error: mock.fn() };
+
+    await retroSubmitCallback({ ack, view, body, client, logger });
+
     assert.equal(
       client.chat.postMessage.mock.calls.length,
-      0,
-      "Should not send any messages when canvas write fails",
+      1,
+      "Should still send DM copy even when canvas write fails",
     );
+    const copyCall = client.chat.postMessage.mock.calls[0].arguments[0];
+    assert.ok(copyCall.blocks, "Message should include Block Kit blocks");
   });
 
   it("does not send confirmation when channel is not configured", async () => {
