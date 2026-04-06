@@ -66,7 +66,7 @@ If you're using Claude Code, Copilot, or another AI tool to assist with contribu
 
 ### Be transparent
 
-- Include a `Co-Authored-By` trailer in your commit messages to indicate AI assistance
+- Indicate AI assistance in your commit messages (e.g., a `Co-Authored-By` trailer or a note in the message body)
 - In your PR description, note which parts were AI-assisted if it's not the entire change
 
 ### Review AI output critically
@@ -80,9 +80,9 @@ If you're using Claude Code, Copilot, or another AI tool to assist with contribu
 
 AI tools can make it tempting to skip the "red" phase of red-green-refactor. Don't skip it. Always follow the full cycle:
 
-1. Have the AI write the test first
+1. Write the test first (you or the AI)
 2. Run `npm test` and confirm the new test **fails**
-3. Then implement — whether by hand or with AI help
+3. Implement the code to make it pass
 4. Run tests again to confirm they **pass**
 
 ### Don't over-generate
@@ -90,10 +90,6 @@ AI tools can make it tempting to skip the "red" phase of red-green-refactor. Don
 - Avoid letting AI add features, abstractions, or "improvements" beyond what you're working on
 - Keep changes focused on the task. If the AI suggests refactoring unrelated code, skip it
 - Don't commit AI-generated comments that just restate what the code already says
-
-### Session logs
-
-If you're using Claude Code with this project's CLAUDE.md conventions, maintain session logs in `claude-notes/logs/`. Don't rewrite previous session entries — only add new ones.
 
 ## For Contributors Not Using AI
 
