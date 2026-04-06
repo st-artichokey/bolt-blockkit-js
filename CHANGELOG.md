@@ -1,5 +1,14 @@
 # Changelog
 
+## fix: Remove template remnants and fix manifest scopes
+
+- Removed unused `commands` scope from manifest (no slash commands in the app)
+- Added missing `pins:write` scope (required by pin-to-channel overflow action)
+- Removed redundant `messages_tab_read_only_enabled` from manifest
+- Made log level configurable via `LOG_LEVEL` env var (defaults to INFO instead of DEBUG)
+- Changed `.env` placeholder from fake channel ID to `YOUR_CHANNEL_ID`
+- Updated README env example to match
+
 ## docs: Add Resources section to README with Slack API links
 
 - Added links to Slack API docs, Block Kit reference, Block Kit Builder, Bolt docs, CLI docs, and manifest schema

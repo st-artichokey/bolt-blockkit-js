@@ -12,8 +12,7 @@
   "features": {
     "app_home": {
       "home_tab_enabled": true,
-      "messages_tab_enabled": false,
-      "messages_tab_read_only_enabled": true
+      "messages_tab_enabled": false
     },
     "bot_user": {
       "display_name": "Retro Recap App",
@@ -33,8 +32,8 @@
       "bot": [
         "chat:write",
         "chat:write.public",
-        "commands",
-        "im:write"
+        "im:write",
+        "pins:write"
       ]
     }
   },
