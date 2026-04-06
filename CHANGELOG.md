@@ -1,5 +1,11 @@
 # Changelog
 
+## fix: Add missing channels:read scope for member_joined_channel event
+
+- Added `channels:read` scope — required for the bot to receive `member_joined_channel` events
+- Without this scope, auto-channel discovery was silently broken (event never delivered)
+- Verified all scopes against Slack API docs: no other missing or unused scopes
+
 ## fix: Clean up manifest — remove unused scope, enable Messages tab
 
 - Removed unused `chat:write.public` scope (app only writes canvases to the retro channel, not messages)
