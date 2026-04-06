@@ -1,5 +1,11 @@
 # Changelog
 
+## fix: Add missing commands scope for global shortcut
+
+- Added `commands` bot scope — required for the "Start Retrospective" global shortcut to appear in Slack
+- Without this scope, shortcuts are not available to users (per Slack docs: "your app must have the `commands` permission scope")
+- Verified `commands` is a bot-only scope
+
 ## fix: Add missing channels:read scope for member_joined_channel event
 
 - Added `channels:read` scope — required for the bot to receive `member_joined_channel` events
