@@ -1,5 +1,10 @@
 # Changelog
 
+## fix: Add missing @returns {void} JSDoc tags to register functions
+
+- Added `@returns {void}` to all 5 `register()` exports and `registerListeners()`
+- Brings all exported functions into compliance with project JSDoc conventions
+
 ## fix: Clarify TDD discipline section in CONTRIBUTING.md
 
 - Reworded ambiguous "Don't:" phrasing that made the correct TDD steps read as things to avoid

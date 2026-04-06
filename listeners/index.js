@@ -6,6 +6,7 @@ import * as views from "./views/index.js";
 /**
  * Top-level registration entry point. Delegates to each listener category.
  * @param {import('@slack/bolt').App} app - The Bolt app instance.
+ * @returns {void}
  */
 export const registerListeners = (app) => {
   events.register(app);

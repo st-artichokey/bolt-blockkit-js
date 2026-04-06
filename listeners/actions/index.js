@@ -7,6 +7,7 @@ import {
 /**
  * Registers all action listeners.
  * @param {import('@slack/bolt').App} app - The Bolt app instance.
+ * @returns {void}
  */
 export const register = (app) => {
   app.action("add_comment", addCommentCallback);
