@@ -1,5 +1,14 @@
 # Changelog
 
+## fix: Recover existing canvas instead of creating duplicates
+
+- `writeToCanvas` now handles the `channel_canvas_already_exists` error from `conversations.canvases.create`
+- When creation fails because a canvas already exists, the code looks up the canvas ID via `conversations.info` and appends to it
+- Fixes duplicate canvas creation after app restarts (in-memory cache was lost)
+- Extracted `appendToCanvas`, `lookupCanvasId`, and `cacheCanvasId` helpers for clarity
+- Added 1 new test, updated 1 existing test for the recovery flow
+- Total tests: 65
+
 ## fix: Guard against multi-channel race in member_joined_channel
 
 - When the bot is added to a new channel but a retro channel is already set, the event handler now logs a warning and skips the update

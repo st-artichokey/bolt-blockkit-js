@@ -186,6 +186,9 @@ describe("retroSubmitCallback", () => {
           canvas_id: canvasId || "F_NEW_CANVAS",
         })),
       },
+      info: mock.fn(async () => ({
+        channel: { properties: { canvas: { canvas_id: "F_EXISTING" } } },
+      })),
     },
     canvases: {
       edit: mock.fn(async () => ({})),
@@ -290,7 +293,7 @@ describe("retroSubmitCallback", () => {
     );
   });
 
-  it("creates a new canvas when edit fails with stale cache", async () => {
+  it("recovers via conversations.info when edit fails on stale cache", async () => {
     const { retroSubmitCallback } = await loadModule();
     const ack = mock.fn(async () => {});
     const client = buildClient();
@@ -302,23 +305,31 @@ describe("retroSubmitCallback", () => {
     await retroSubmitCallback({ ack, view, body, client, logger });
     assert.equal(client.conversations.canvases.create.mock.calls.length, 1);
 
-    // Make edit fail (simulating deleted canvas)
+    // Make edit fail (simulating deleted/stale canvas)
+    let editCallCount = 0;
     client.canvases.edit = mock.fn(async () => {
-      throw new Error("canvas_not_found");
+      editCallCount++;
+      if (editCallCount === 1) {
+        throw new Error("canvas_not_found");
+      }
+      return {};
     });
-    // Reset create mock to return a new canvas ID
-    client.conversations.canvases.create = mock.fn(async () => ({
-      canvas_id: "F_RECOVERED_CANVAS",
-    }));
+    // Create fails because channel already has a canvas
+    const createError = new Error("channel_canvas_already_exists");
+    createError.data = { error: "channel_canvas_already_exists" };
+    client.conversations.canvases.create = mock.fn(async () => {
+      throw createError;
+    });
 
-    // Second call should recover by creating a new canvas
+    // Second call should: fail edit → fail create → lookup via info → succeed edit
     await retroSubmitCallback({ ack, view, body, client, logger });
 
     assert.equal(
-      client.conversations.canvases.create.mock.calls.length,
+      client.conversations.info.mock.calls.length,
       1,
-      "Should create a new canvas after edit failure",
+      "Should look up existing canvas via conversations.info",
     );
+    assert.equal(editCallCount, 2, "Should retry edit with recovered canvas ID");
   });
 
   it("only creates one canvas when two submissions race", async () => {
@@ -357,6 +368,41 @@ describe("retroSubmitCallback", () => {
       1,
       "Second submission should append via edit",
     );
+  });
+
+  it("recovers existing canvas ID when create returns channel_canvas_already_exists", async () => {
+    const { retroSubmitCallback } = await loadModule();
+    const ack = mock.fn(async () => {});
+    const client = buildClient();
+    const error = new Error("channel_canvas_already_exists");
+    error.data = { error: "channel_canvas_already_exists" };
+    client.conversations.canvases.create = mock.fn(async () => {
+      throw error;
+    });
+    const view = { state: { values: buildFakeValues() } };
+    const body = { user: { id: "U456" } };
+    const logger = { error: mock.fn() };
+
+    await retroSubmitCallback({ ack, view, body, client, logger });
+
+    assert.equal(
+      client.conversations.canvases.create.mock.calls.length,
+      1,
+      "Should attempt create once",
+    );
+    assert.equal(
+      client.conversations.info.mock.calls.length,
+      1,
+      "Should look up channel info to find existing canvas",
+    );
+    assert.equal(
+      client.canvases.edit.mock.calls.length,
+      1,
+      "Should append to existing canvas via edit",
+    );
+    const editCall = client.canvases.edit.mock.calls[0].arguments[0];
+    assert.equal(editCall.canvas_id, "F_EXISTING");
+    assert.equal(editCall.changes[0].operation, "insert_at_end");
   });
 
   it("sends error message to user when retro channel is not configured", async () => {

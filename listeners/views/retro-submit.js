@@ -153,7 +153,43 @@ export const buildRetroMarkdown = (retro, userId) => {
 };
 
 /**
+ * Appends markdown to a canvas using insert_at_end.
+ */
+const appendToCanvas = (client, canvasId, markdown) =>
+  client.canvases.edit({
+    canvas_id: canvasId,
+    changes: [
+      {
+        operation: "insert_at_end",
+        document_content: { type: "markdown", markdown },
+      },
+    ],
+  });
+
+/**
+ * Looks up the existing channel canvas ID via conversations.info.
+ * @returns {string|null} The canvas ID or null if not found.
+ */
+const lookupCanvasId = async (client, channel) => {
+  const info = await client.conversations.info({ channel });
+  return info.channel?.properties?.canvas?.canvas_id ?? null;
+};
+
+/**
+ * Caches a canvas ID with LRU eviction.
+ */
+const cacheCanvasId = (channel, canvasId) => {
+  if (canvasCache.size >= MAX_CACHE_SIZE) {
+    const oldest = canvasCache.keys().next().value;
+    canvasCache.delete(oldest);
+  }
+  canvasCache.set(channel, canvasId);
+};
+
+/**
  * Writes markdown to the channel canvas, creating one if needed.
+ * Handles the case where a canvas already exists (e.g. after app restart)
+ * by recovering the canvas ID via conversations.info.
  * Uses a per-channel lock to prevent concurrent canvas creation.
  */
 const writeToCanvas = async (client, channel, markdown) => {
@@ -167,36 +203,41 @@ const writeToCanvas = async (client, channel, markdown) => {
 
   if (existingCanvasId) {
     try {
-      await client.canvases.edit({
-        canvas_id: existingCanvasId,
-        changes: [
-          {
-            operation: "insert_at_end",
-            document_content: { type: "markdown", markdown },
-          },
-        ],
-      });
+      await appendToCanvas(client, existingCanvasId, markdown);
       return;
     } catch {
       canvasCache.delete(channel);
     }
   }
 
-  // Create a new canvas, storing the promise so concurrent callers can wait
-  const createPromise = client.conversations.canvases.create({
-    channel_id: channel,
-    document_content: { type: "markdown", markdown },
-  });
+  // Try to create a new canvas, storing the promise so concurrent callers can wait
+  const createPromise = (async () => {
+    try {
+      const result = await client.conversations.canvases.create({
+        channel_id: channel,
+        document_content: { type: "markdown", markdown },
+      });
+      cacheCanvasId(channel, result.canvas_id);
+      return;
+    } catch (error) {
+      if (error.data?.error !== "channel_canvas_already_exists") {
+        throw error;
+      }
+    }
+
+    // Canvas already exists — recover its ID and append
+    const canvasId = await lookupCanvasId(client, channel);
+    if (!canvasId) {
+      throw new Error("Canvas exists but could not retrieve its ID");
+    }
+    cacheCanvasId(channel, canvasId);
+    await appendToCanvas(client, canvasId, markdown);
+  })();
+
   channelLocks.set(channel, createPromise);
 
   try {
-    const result = await createPromise;
-    // Evict oldest entry if cache is full
-    if (canvasCache.size >= MAX_CACHE_SIZE) {
-      const oldest = canvasCache.keys().next().value;
-      canvasCache.delete(oldest);
-    }
-    canvasCache.set(channel, result.canvas_id);
+    await createPromise;
   } finally {
     channelLocks.delete(channel);
   }
