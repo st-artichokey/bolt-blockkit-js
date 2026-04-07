@@ -56,6 +56,15 @@ describe("manifest.json", () => {
     assert.equal(manifest.features.bot_user.display_name, "RetroRun");
   });
 
+  it("includes canvases:read scope for section lookup", async () => {
+    const manifest = await loadManifest();
+    const scopes = manifest.oauth_config.scopes.bot;
+    assert.ok(
+      scopes.includes("canvases:read"),
+      `Expected bot scopes to include "canvases:read", got: ${scopes.join(", ")}`,
+    );
+  });
+
   it("includes im:write scope for sending DM copies", async () => {
     const manifest = await loadManifest();
     const scopes = manifest.oauth_config.scopes.bot;

@@ -123,21 +123,32 @@ describe("buildRetroSummaryBlocks", () => {
   });
 });
 
-describe("buildRetroMarkdown", () => {
+describe("buildDateHeading", () => {
   const loadModule = () => esmock("../../listeners/views/retro-submit.js", {});
 
-  it("returns markdown string with retro title as heading", async () => {
-    const { buildRetroMarkdown, parseRetroValues } = await loadModule();
-    const retro = parseRetroValues(buildFakeValues());
-    const md = buildRetroMarkdown(retro, "U456");
+  it("returns an H1 heading with the date", async () => {
+    const { buildDateHeading } = await loadModule();
+    const heading = buildDateHeading("2026-04-07");
+    assert.ok(heading.startsWith("# 2026-04-07"), "Should start with H1 date");
+  });
+});
 
-    assert.ok(md.includes("# Sprint 4 Retro"));
+describe("buildRetroEntry", () => {
+  const loadModule = () => esmock("../../listeners/views/retro-submit.js", {});
+
+  it("returns markdown with retro title as H2 heading", async () => {
+    const { buildRetroEntry, parseRetroValues } = await loadModule();
+    const retro = parseRetroValues(buildFakeValues());
+    const md = buildRetroEntry(retro, "U456");
+
+    assert.ok(md.includes("## Sprint 4 Retro"), "Title should be H2");
+    assert.ok(!md.includes("# 2026-03-28"), "Should not include date heading");
   });
 
   it("includes all retro sections", async () => {
-    const { buildRetroMarkdown, parseRetroValues } = await loadModule();
+    const { buildRetroEntry, parseRetroValues } = await loadModule();
     const retro = parseRetroValues(buildFakeValues());
-    const md = buildRetroMarkdown(retro, "U456");
+    const md = buildRetroEntry(retro, "U456");
 
     assert.ok(md.includes("What Went Well"), "Missing went well section");
     assert.ok(md.includes("Shipped on time"), "Missing went well content");
@@ -151,9 +162,9 @@ describe("buildRetroMarkdown", () => {
   });
 
   it("includes sprint, date, mood, and categories metadata", async () => {
-    const { buildRetroMarkdown, parseRetroValues } = await loadModule();
+    const { buildRetroEntry, parseRetroValues } = await loadModule();
     const retro = parseRetroValues(buildFakeValues());
-    const md = buildRetroMarkdown(retro, "U456");
+    const md = buildRetroEntry(retro, "U456");
 
     assert.ok(md.includes("Sprint 4"), "Missing sprint");
     assert.ok(md.includes("2026-03-28"), "Missing date");
@@ -162,9 +173,9 @@ describe("buildRetroMarkdown", () => {
   });
 
   it("includes submitter mention", async () => {
-    const { buildRetroMarkdown, parseRetroValues } = await loadModule();
+    const { buildRetroEntry, parseRetroValues } = await loadModule();
     const retro = parseRetroValues(buildFakeValues());
-    const md = buildRetroMarkdown(retro, "U456");
+    const md = buildRetroEntry(retro, "U456");
 
     assert.ok(md.includes("![](@U456)"), "Missing submitter canvas mention");
   });
@@ -178,25 +189,28 @@ describe("retroSubmitCallback", () => {
       },
     });
 
-  /** Builds a mock client with canvas and chat APIs. */
-  const buildClient = (canvasId = null) => ({
+  /** Builds a mock client. canvasId=null means no canvas exists yet. */
+  const buildClient = ({ canvasId = null, dateSections = [] } = {}) => ({
     conversations: {
       canvases: {
-        create: mock.fn(async () => ({
-          canvas_id: canvasId || "F_NEW_CANVAS",
-        })),
+        create: mock.fn(async () => ({ canvas_id: "F_NEW_CANVAS" })),
       },
       info: mock.fn(async () => ({
-        channel: { properties: { canvas: { canvas_id: "F_EXISTING" } } },
+        channel: canvasId
+          ? { properties: { canvas: { canvas_id: canvasId } } }
+          : { properties: {} },
       })),
     },
     canvases: {
       edit: mock.fn(async () => ({})),
+      sections: {
+        lookup: mock.fn(async () => ({ sections: dateSections })),
+      },
     },
     chat: { postMessage: mock.fn(async () => ({})) },
   });
 
-  it("acknowledges and creates a canvas on first submission", async () => {
+  it("creates a canvas when none exists", async () => {
     const { retroSubmitCallback } = await loadModule();
     const ack = mock.fn(async () => {});
     const client = buildClient();
@@ -211,39 +225,75 @@ describe("retroSubmitCallback", () => {
     const createCall =
       client.conversations.canvases.create.mock.calls[0].arguments[0];
     assert.equal(createCall.channel_id, "C999");
-    assert.equal(createCall.document_content.type, "markdown");
     assert.ok(
-      createCall.document_content.markdown.includes("# Sprint 4 Retro"),
-      "Canvas should contain retro title as markdown heading",
+      createCall.document_content.markdown.includes("# 2026-03-28"),
+      "Should include date heading",
+    );
+    assert.ok(
+      createCall.document_content.markdown.includes("## Sprint 4 Retro"),
+      "Should include retro entry as H2",
     );
   });
 
-  it("appends to existing canvas on subsequent submissions", async () => {
+  it("inserts under existing date heading when section found", async () => {
     const { retroSubmitCallback } = await loadModule();
     const ack = mock.fn(async () => {});
-    const client = buildClient();
+    const client = buildClient({
+      canvasId: "F_EXISTING",
+      dateSections: [{ id: "section_123" }],
+    });
     const view = { state: { values: buildFakeValues() } };
     const body = { user: { id: "U456" } };
     const logger = { error: mock.fn() };
 
-    // First call creates the canvas
-    await retroSubmitCallback({ ack, view, body, client, logger });
-    // Second call should append
     await retroSubmitCallback({ ack, view, body, client, logger });
 
     assert.equal(
       client.conversations.canvases.create.mock.calls.length,
-      1,
-      "Should only create once",
+      0,
+      "Should not create a new canvas",
     );
-    assert.equal(
-      client.canvases.edit.mock.calls.length,
-      1,
-      "Should edit on second call",
-    );
+    assert.equal(client.canvases.edit.mock.calls.length, 1);
     const editCall = client.canvases.edit.mock.calls[0].arguments[0];
-    assert.equal(editCall.canvas_id, "F_NEW_CANVAS");
-    assert.equal(editCall.changes[0].operation, "insert_at_end");
+    assert.equal(editCall.canvas_id, "F_EXISTING");
+    assert.equal(editCall.changes[0].operation, "insert_after");
+    assert.equal(editCall.changes[0].section_id, "section_123");
+    assert.ok(
+      editCall.changes[0].document_content.markdown.includes(
+        "## Sprint 4 Retro",
+      ),
+      "Should insert retro entry",
+    );
+    assert.ok(
+      !editCall.changes[0].document_content.markdown.includes("# 2026-03-28"),
+      "Should not include date heading when section exists",
+    );
+  });
+
+  it("inserts new date section at top when no date heading found", async () => {
+    const { retroSubmitCallback } = await loadModule();
+    const ack = mock.fn(async () => {});
+    const client = buildClient({ canvasId: "F_EXISTING", dateSections: [] });
+    const view = { state: { values: buildFakeValues() } };
+    const body = { user: { id: "U456" } };
+    const logger = { error: mock.fn() };
+
+    await retroSubmitCallback({ ack, view, body, client, logger });
+
+    assert.equal(client.canvases.edit.mock.calls.length, 1);
+    const editCall = client.canvases.edit.mock.calls[0].arguments[0];
+    assert.equal(editCall.canvas_id, "F_EXISTING");
+    assert.equal(editCall.changes[0].operation, "insert_at_start");
+    assert.ok(
+      editCall.changes[0].document_content.markdown.includes("# 2026-03-28"),
+      "Should include date heading",
+    );
+    assert.ok(
+      editCall.changes[0].document_content.markdown.includes(
+        "## Sprint 4 Retro",
+      ),
+      "Should include retro entry",
+    );
   });
 
   it("sends copy to Messages tab when checkbox selected", async () => {
@@ -291,118 +341,6 @@ describe("retroSubmitCallback", () => {
       call.text.includes("submitted"),
       "The only message should be the confirmation",
     );
-  });
-
-  it("recovers via conversations.info when edit fails on stale cache", async () => {
-    const { retroSubmitCallback } = await loadModule();
-    const ack = mock.fn(async () => {});
-    const client = buildClient();
-    const view = { state: { values: buildFakeValues() } };
-    const body = { user: { id: "U456" } };
-    const logger = { error: mock.fn() };
-
-    // First call creates the canvas and caches the ID
-    await retroSubmitCallback({ ack, view, body, client, logger });
-    assert.equal(client.conversations.canvases.create.mock.calls.length, 1);
-
-    // Make edit fail (simulating deleted/stale canvas)
-    let editCallCount = 0;
-    client.canvases.edit = mock.fn(async () => {
-      editCallCount++;
-      if (editCallCount === 1) {
-        throw new Error("canvas_not_found");
-      }
-      return {};
-    });
-    // Create fails because channel already has a canvas
-    const createError = new Error("channel_canvas_already_exists");
-    createError.data = { error: "channel_canvas_already_exists" };
-    client.conversations.canvases.create = mock.fn(async () => {
-      throw createError;
-    });
-
-    // Second call should: fail edit → fail create → lookup via info → succeed edit
-    await retroSubmitCallback({ ack, view, body, client, logger });
-
-    assert.equal(
-      client.conversations.info.mock.calls.length,
-      1,
-      "Should look up existing canvas via conversations.info",
-    );
-    assert.equal(editCallCount, 2, "Should retry edit with recovered canvas ID");
-  });
-
-  it("only creates one canvas when two submissions race", async () => {
-    const { retroSubmitCallback } = await loadModule();
-    const client = buildClient();
-
-    const view = { state: { values: buildFakeValues() } };
-    const body = { user: { id: "U456" } };
-    const logger = { error: mock.fn() };
-
-    // Launch two submissions concurrently — both see no cached canvas
-    await Promise.all([
-      retroSubmitCallback({
-        ack: mock.fn(async () => {}),
-        view,
-        body,
-        client,
-        logger,
-      }),
-      retroSubmitCallback({
-        ack: mock.fn(async () => {}),
-        view,
-        body,
-        client,
-        logger,
-      }),
-    ]);
-
-    assert.equal(
-      client.conversations.canvases.create.mock.calls.length,
-      1,
-      "Should only create one canvas despite two concurrent submissions",
-    );
-    assert.equal(
-      client.canvases.edit.mock.calls.length,
-      1,
-      "Second submission should append via edit",
-    );
-  });
-
-  it("recovers existing canvas ID when create returns channel_canvas_already_exists", async () => {
-    const { retroSubmitCallback } = await loadModule();
-    const ack = mock.fn(async () => {});
-    const client = buildClient();
-    const error = new Error("channel_canvas_already_exists");
-    error.data = { error: "channel_canvas_already_exists" };
-    client.conversations.canvases.create = mock.fn(async () => {
-      throw error;
-    });
-    const view = { state: { values: buildFakeValues() } };
-    const body = { user: { id: "U456" } };
-    const logger = { error: mock.fn() };
-
-    await retroSubmitCallback({ ack, view, body, client, logger });
-
-    assert.equal(
-      client.conversations.canvases.create.mock.calls.length,
-      1,
-      "Should attempt create once",
-    );
-    assert.equal(
-      client.conversations.info.mock.calls.length,
-      1,
-      "Should look up channel info to find existing canvas",
-    );
-    assert.equal(
-      client.canvases.edit.mock.calls.length,
-      1,
-      "Should append to existing canvas via edit",
-    );
-    const editCall = client.canvases.edit.mock.calls[0].arguments[0];
-    assert.equal(editCall.canvas_id, "F_EXISTING");
-    assert.equal(editCall.changes[0].operation, "insert_at_end");
   });
 
   it("sends error message to user when retro channel is not configured", async () => {
@@ -455,8 +393,8 @@ describe("retroSubmitCallback", () => {
     const { retroSubmitCallback } = await loadModule();
     const ack = mock.fn(async () => {});
     const client = buildClient();
-    client.conversations.canvases.create = mock.fn(async () => {
-      throw new Error("canvas_error");
+    client.conversations.info = mock.fn(async () => {
+      throw new Error("info_error");
     });
     const view = { state: { values: buildFakeValues() } };
     const body = { user: { id: "U456" } };
@@ -478,8 +416,8 @@ describe("retroSubmitCallback", () => {
     const { retroSubmitCallback } = await loadModule();
     const ack = mock.fn(async () => {});
     const client = buildClient();
-    client.conversations.canvases.create = mock.fn(async () => {
-      throw new Error("canvas_error");
+    client.conversations.info = mock.fn(async () => {
+      throw new Error("info_error");
     });
     const values = buildFakeValues({
       dm_summary_block: {
