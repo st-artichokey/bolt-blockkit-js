@@ -1,5 +1,12 @@
 # Changelog
 
+## docs: Fix inaccurate comments in retro-submit
+
+- Fixed "LRU eviction" comments to "FIFO eviction" — the cache evicts oldest-inserted, not least-recently-used
+- Updated `retroSubmitCallback` JSDoc to document confirmation message and no-channel error path
+- Improved inline comment on create-or-recover IIFE to describe the full recovery flow
+- Added missing `@param` tags to `lookupCanvasId`
+
 ## refactor: Extract shared formatRetroMeta helper
 
 - Deduplicated mood emoji and categories list formatting from `buildRetroSummaryBlocks` and `buildRetroMarkdown` into `formatRetroMeta`

@@ -14,7 +14,7 @@ const formatRetroMeta = (retro) => ({
     retro.categories.length > 0 ? retro.categories.join(", ") : "None selected",
 });
 
-/** In-memory canvas ID cache keyed by channel ID (max 50 entries, LRU eviction). */
+/** In-memory canvas ID cache keyed by channel ID (max 50 entries, FIFO eviction). */
 const MAX_CACHE_SIZE = 50;
 const canvasCache = new Map();
 
@@ -171,6 +171,8 @@ const appendToCanvas = (client, canvasId, markdown) =>
 
 /**
  * Looks up the existing channel canvas ID via conversations.info.
+ * @param {import('@slack/bolt').WebClient} client - Slack Web API client.
+ * @param {string} channel - The Slack channel ID.
  * @returns {string|null} The canvas ID or null if not found.
  */
 const lookupCanvasId = async (client, channel) => {
@@ -179,7 +181,7 @@ const lookupCanvasId = async (client, channel) => {
 };
 
 /**
- * Caches a canvas ID with LRU eviction.
+ * Caches a canvas ID with FIFO eviction.
  */
 const cacheCanvasId = (channel, canvasId) => {
   if (canvasCache.size >= MAX_CACHE_SIZE) {
@@ -213,7 +215,8 @@ const writeToCanvas = async (client, channel, markdown) => {
     }
   }
 
-  // Try to create a new canvas, storing the promise so concurrent callers can wait
+  // Create-or-recover: attempt canvas creation, falling back to ID recovery on conflict.
+  // The promise is stored in channelLocks so concurrent callers wait.
   const createPromise = (async () => {
     try {
       const result = await client.conversations.canvases.create({
@@ -248,7 +251,9 @@ const writeToCanvas = async (client, channel, markdown) => {
 
 /**
  * Handles the retrospective modal submission. Writes retro content to the
- * channel canvas and optionally sends a copy to the user's Messages tab.
+ * channel canvas, sends a confirmation to the submitter, and optionally
+ * sends a Block Kit copy to the user's Messages tab. If the retro channel
+ * is not configured, notifies the user with setup instructions.
  * @param {object} args - Bolt view submission callback arguments.
  * @param {Function} args.ack - Acknowledge the view submission.
  * @param {object} args.view - The submitted view payload.
