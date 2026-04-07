@@ -1,8 +1,20 @@
-import { getBotUserId, setRetroChannel } from "../channel-store.js";
+import {
+  getBotUserId,
+  getRetroChannel,
+  setRetroChannel,
+} from "../channel-store.js";
 
 export const memberJoinedChannelCallback = async ({ event, logger }) => {
   const botId = getBotUserId();
   if (!botId || event.user !== botId) {
+    return;
+  }
+
+  const existing = getRetroChannel();
+  if (existing) {
+    logger.warn(
+      `Bot added to ${event.channel}, but retro channel is already set to ${existing} — ignoring`,
+    );
     return;
   }
 

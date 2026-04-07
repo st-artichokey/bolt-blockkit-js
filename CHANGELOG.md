@@ -1,5 +1,12 @@
 # Changelog
 
+## fix: Guard against multi-channel race in member_joined_channel
+
+- When the bot is added to a new channel but a retro channel is already set, the event handler now logs a warning and skips the update
+- Prevents unpredictable last-write-wins behavior when the bot is added to multiple channels
+- Added test for the guard; updated existing test to mock `getRetroChannel`
+- Total tests: 64
+
 ## fix: Replace broken deep link with native channel mention
 
 - Replaced unreliable `slack://channel` deep link in App Home with Slack's native mrkdwn channel mention (`<#CXXXXX>`)
