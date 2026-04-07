@@ -30,6 +30,7 @@
   "oauth_config": {
     "scopes": {
       "bot": [
+        "canvases:read",
         "canvases:write",
         "channels:history",
         "channels:read",
