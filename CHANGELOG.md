@@ -1,5 +1,66 @@
 # Changelog
 
+## fix: Restore .slack/hooks.json for Slack CLI app startup
+
+- Restored `.slack/hooks.json` — the Slack CLI bootstrap file that was accidentally deleted when `.slack/` was added to `.gitignore`
+- Replaced blanket `.slack/` gitignore with a selective `.slack/.gitignore` that only ignores machine-specific files (`apps.dev.json`, `cache/`, `config.json`)
+- Without `hooks.json`, `slack run` cannot discover how to start the app
+
+## docs: Add Slack interactivity guide link to README and CONTRIBUTING
+
+- Added interactivity guide link to README Resources section (shortcuts, modals, action handling)
+- Added interactivity guide link to CONTRIBUTING.md AI review checklist for verifying API methods
+
+## fix: Send user-facing error when retro channel is not configured
+
+- When `getRetroChannel()` returns null during submission, the user now receives a message explaining the issue and how to fix it (`/invite @RetroRun`)
+- Previously the modal closed silently with only a server-side log
+- Updated 2 existing tests to assert the error message is sent
+- Total tests: 61
+
+## feat: Auto-discover retro channel on startup
+
+- Added `discoverRetroChannel()` in `channel-store.js` — queries `users.conversations` on startup to find public channels the bot is already in
+- Handles single channel (sets it), multiple channels (uses first, warns), no channels (warns), and API errors (logs, continues)
+- Called in `app.js` after `auth.test()` so the retro channel survives app restarts
+- Added 4 tests (TDD): one channel, multiple channels, no channels, API error
+- Total tests: 61
+
+## fix: Remove stale RETRO_CHANNEL_ID env var fallback
+
+- Removed `process.env.RETRO_CHANNEL_ID` fallback from `getRetroChannel()` — the env var was causing `channel_not_found` errors when set to a stale value
+- Auto-discovery via `member_joined_channel` is now the sole mechanism for setting the retro channel
+- Removed `RETRO_CHANNEL_ID` from README env var docs and `.env`
+- Updated channel-store tests to remove env var references
+- Total tests: 57 (removed 1 env var fallback test)
+
+## fix: Add missing commands scope for global shortcut
+
+- Added `commands` bot scope — required for the "Start Retrospective" global shortcut to appear in Slack
+- Without this scope, shortcuts are not available to users (per Slack docs: "your app must have the `commands` permission scope")
+- Verified `commands` is a bot-only scope
+
+## fix: Add missing channels:read scope for member_joined_channel event
+
+- Added `channels:read` scope — required for the bot to receive `member_joined_channel` events
+- Without this scope, auto-channel discovery was silently broken (event never delivered)
+- Verified all scopes against Slack API docs: no other missing or unused scopes
+
+## fix: Clean up manifest — remove unused scope, enable Messages tab
+
+- Removed unused `chat:write.public` scope (app only writes canvases to the retro channel, not messages)
+- Enabled `messages_tab_enabled` in App Home — confirmation messages and DM copies are delivered to the Messages tab, so it should be visible to users
+- All 58 tests pass
+
+## feat: Send confirmation message to Messages tab after retro submission
+
+- After a successful canvas write, a confirmation message is sent to the user's Messages tab with a link to the retro channel
+- Confirmation is not sent if the canvas write fails or the channel is not configured
+- Confirmation is skipped on canvas failure, but DM copy still sends if the user requested it
+- Added 4 tests (TDD): confirmation on success, not on canvas failure, DM copy still sends on canvas failure, not on unconfigured channel
+- Updated 2 existing tests to account for the new confirmation message
+- Total tests: 58
+
 ## fix: Remove Claude-specific conventions from CONTRIBUTING.md
 
 - Removed session logs section (internal Claude Code convention, not for developers)

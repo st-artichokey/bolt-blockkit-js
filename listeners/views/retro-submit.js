@@ -227,15 +227,36 @@ export const retroSubmitCallback = async ({
 
   if (!channel) {
     logger.error("Retro channel is not configured");
+    try {
+      await client.chat.postMessage({
+        channel: userId,
+        text: "Your retrospective couldn't be saved — RetroRun isn't in a channel yet. Ask a workspace admin to type `/invite @RetroRun` in a channel, then try again.",
+      });
+    } catch (error) {
+      logger.error("Failed to send setup error to user", error);
+    }
     return;
   }
 
   const markdown = buildRetroMarkdown(retro, userId);
 
+  let canvasWriteSucceeded = false;
   try {
     await writeToCanvas(client, channel, markdown);
+    canvasWriteSucceeded = true;
   } catch (error) {
     logger.error("Failed to write retro to canvas", error);
+  }
+
+  if (canvasWriteSucceeded) {
+    try {
+      await client.chat.postMessage({
+        channel: userId,
+        text: `Your retrospective "${retro.title}" was submitted to <#${channel}>.`,
+      });
+    } catch (error) {
+      logger.error("Failed to send submission confirmation", error);
+    }
   }
 
   const dmSelected =

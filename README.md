@@ -28,7 +28,7 @@ On submission, retrospective data is written to a shared channel canvas using `c
 
 ### Auto-channel discovery
 
-When the bot is added to a channel, it automatically uses that channel for retrospectives — no manual `RETRO_CHANNEL_ID` configuration needed (though the env var works as a fallback).
+When the bot is added to a channel, it automatically uses that channel for retrospectives. Invite the bot with `/invite @RetroRun` in any channel.
 
 ## Getting started
 
@@ -45,7 +45,6 @@ When the bot is added to a channel, it automatically uses that channel for retro
    ```
    SLACK_BOT_TOKEN=xoxb-...
    SLACK_APP_TOKEN=xapp-...
-   RETRO_CHANNEL_ID=YOUR_CHANNEL_ID
    ```
 
 3. **Run locally** (Socket Mode)
@@ -98,6 +97,7 @@ When the bot is added to a channel, it automatically uses that channel for retro
 - [Block Kit reference](https://api.slack.com/reference/block-kit)
 - [Block Kit Builder](https://app.slack.com/block-kit-builder) — interactive prototyping tool
 - [Bolt for JavaScript documentation](https://slack.dev/bolt-js)
+- [Interactivity guide](https://docs.slack.dev/interactivity/implementing-shortcuts) — shortcuts, modals, and action handling
 - [Slack CLI documentation](https://api.slack.com/automation/cli)
 - [App manifest schema](https://api.slack.com/reference/manifests)
 
