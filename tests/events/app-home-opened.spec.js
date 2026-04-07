@@ -169,6 +169,22 @@ describe("appHomeOpenedCallback", () => {
     assert.ok(canvasRef, "Expected a section referencing the channel canvas");
   });
 
+  it("builds a valid deep link without empty team parameter", async () => {
+    const { blocks } = await getPublishedBlocks("U123", null, "C999");
+    const linkBlock = blocks.find(
+      (b) => b.type === "section" && b.text?.text?.includes("slack://channel"),
+    );
+    assert.ok(linkBlock, "Expected a block with a slack:// deep link");
+    assert.ok(
+      !linkBlock.text.text.includes("team=&"),
+      "Deep link should not contain empty team= parameter",
+    );
+    assert.ok(
+      linkBlock.text.text.includes("id=C999"),
+      "Deep link should contain the channel ID",
+    );
+  });
+
   it("shows limited view without button when channel access fails", async () => {
     const client = {
       views: { publish: mock.fn(async () => ({})) },

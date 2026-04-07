@@ -1,5 +1,12 @@
 # Changelog
 
+## fix: Remove empty team parameter from retro channel deep link
+
+- Fixed malformed `slack://channel` deep link in App Home that included an empty `team=&` parameter
+- Link now uses `slack://channel?id=<channelId>` which works reliably across Slack clients
+- Added test asserting the deep link does not contain an empty `team=` parameter
+- Total tests: 63
+
 ## fix: Add missing im:write scope for DM copies
 
 - Added `im:write` to `manifest.json` bot OAuth scopes — required for the "Send me a copy" DM feature to work
