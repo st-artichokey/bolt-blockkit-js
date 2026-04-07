@@ -73,7 +73,7 @@ const appHomeOpenedCallback = async ({ client, event, logger }) => {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `View all retrospectives in the <slack://channel?team=&id=${channelId}|retro channel> canvas.`,
+          text: `View all retrospectives in the <#${channelId}> canvas.`,
         },
       },
     );

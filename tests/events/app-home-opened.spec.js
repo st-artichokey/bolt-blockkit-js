@@ -169,6 +169,18 @@ describe("appHomeOpenedCallback", () => {
     assert.ok(canvasRef, "Expected a section referencing the channel canvas");
   });
 
+  it("links to the retro channel using native mrkdwn channel mention", async () => {
+    const { blocks } = await getPublishedBlocks("U123", null, "C999");
+    const linkBlock = blocks.find(
+      (b) => b.type === "section" && b.text?.text?.includes("<#C999>"),
+    );
+    assert.ok(linkBlock, "Expected a block with a native channel mention <#C999>");
+    assert.ok(
+      !linkBlock.text.text.includes("slack://"),
+      "Should use native channel mention, not slack:// deep link",
+    );
+  });
+
   it("shows limited view without button when channel access fails", async () => {
     const client = {
       views: { publish: mock.fn(async () => ({})) },

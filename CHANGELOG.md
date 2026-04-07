@@ -1,5 +1,12 @@
 # Changelog
 
+## fix: Replace broken deep link with native channel mention
+
+- Replaced unreliable `slack://channel` deep link in App Home with Slack's native mrkdwn channel mention (`<#CXXXXX>`)
+- The `slack://` protocol link did not work in practice; native mentions are rendered and linked by Slack automatically
+- Updated test to assert the native format is used
+- Total tests: 63
+
 ## fix: Add missing im:write scope for DM copies
 
 - Added `im:write` to `manifest.json` bot OAuth scopes — required for the "Send me a copy" DM feature to work
