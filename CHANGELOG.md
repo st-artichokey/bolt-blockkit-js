@@ -1,5 +1,33 @@
 # Changelog
 
+## docs: Fix inaccurate comments in retro-submit
+
+- Fixed "LRU eviction" comments to "FIFO eviction" — the cache evicts oldest-inserted, not least-recently-used
+- Updated `retroSubmitCallback` JSDoc to document confirmation message and no-channel error path
+- Improved inline comment on create-or-recover IIFE to describe the full recovery flow
+- Added missing `@param` tags to `lookupCanvasId`
+
+## refactor: Extract shared formatRetroMeta helper
+
+- Deduplicated mood emoji and categories list formatting from `buildRetroSummaryBlocks` and `buildRetroMarkdown` into `formatRetroMeta`
+- No behavior change; total tests: 65
+
+## fix: Recover existing canvas instead of creating duplicates
+
+- `writeToCanvas` now handles the `channel_canvas_already_exists` error from `conversations.canvases.create`
+- When creation fails because a canvas already exists, the code looks up the canvas ID via `conversations.info` and appends to it
+- Fixes duplicate canvas creation after app restarts (in-memory cache was lost)
+- Extracted `appendToCanvas`, `lookupCanvasId`, and `cacheCanvasId` helpers for clarity
+- Added 1 new test, updated 1 existing test for the recovery flow
+- Total tests: 65
+
+## fix: Guard against multi-channel race in member_joined_channel
+
+- When the bot is added to a new channel but a retro channel is already set, the event handler now logs a warning and skips the update
+- Prevents unpredictable last-write-wins behavior when the bot is added to multiple channels
+- Added test for the guard; updated existing test to mock `getRetroChannel`
+- Total tests: 64
+
 ## fix: Replace broken deep link with native channel mention
 
 - Replaced unreliable `slack://channel` deep link in App Home with Slack's native mrkdwn channel mention (`<#CXXXXX>`)

@@ -10,6 +10,7 @@ describe("memberJoinedChannelCallback", () => {
       {
         "../../listeners/channel-store.js": {
           getBotUserId: () => "U_BOT",
+          getRetroChannel: () => null,
           setRetroChannel,
         },
       },
@@ -42,6 +43,32 @@ describe("memberJoinedChannelCallback", () => {
     await memberJoinedChannelCallback({ event, logger });
 
     assert.equal(setRetroChannel.mock.calls.length, 0);
+  });
+
+  it("does not overwrite existing retro channel when bot joins another", async () => {
+    const setRetroChannel = mock.fn();
+    const { memberJoinedChannelCallback } = await esmock(
+      "../../listeners/events/member-joined-channel.js",
+      {
+        "../../listeners/channel-store.js": {
+          getBotUserId: () => "U_BOT",
+          getRetroChannel: () => "C_EXISTING",
+          setRetroChannel,
+        },
+      },
+    );
+
+    const event = { user: "U_BOT", channel: "C_NEW_CHANNEL" };
+    const logger = { info: mock.fn(), warn: mock.fn() };
+
+    await memberJoinedChannelCallback({ event, logger });
+
+    assert.equal(setRetroChannel.mock.calls.length, 0);
+    assert.equal(logger.warn.mock.calls.length, 1);
+    assert.ok(
+      logger.warn.mock.calls[0].arguments[0].includes("C_EXISTING"),
+      "Warning should mention the existing channel",
+    );
   });
 
   it("ignores when bot user ID is not yet initialized", async () => {
