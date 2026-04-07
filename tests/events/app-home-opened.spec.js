@@ -169,19 +169,15 @@ describe("appHomeOpenedCallback", () => {
     assert.ok(canvasRef, "Expected a section referencing the channel canvas");
   });
 
-  it("builds a valid deep link without empty team parameter", async () => {
+  it("links to the retro channel using native mrkdwn channel mention", async () => {
     const { blocks } = await getPublishedBlocks("U123", null, "C999");
     const linkBlock = blocks.find(
-      (b) => b.type === "section" && b.text?.text?.includes("slack://channel"),
+      (b) => b.type === "section" && b.text?.text?.includes("<#C999>"),
     );
-    assert.ok(linkBlock, "Expected a block with a slack:// deep link");
+    assert.ok(linkBlock, "Expected a block with a native channel mention <#C999>");
     assert.ok(
-      !linkBlock.text.text.includes("team=&"),
-      "Deep link should not contain empty team= parameter",
-    );
-    assert.ok(
-      linkBlock.text.text.includes("id=C999"),
-      "Deep link should contain the channel ID",
+      !linkBlock.text.text.includes("slack://"),
+      "Should use native channel mention, not slack:// deep link",
     );
   });
 
