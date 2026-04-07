@@ -6,7 +6,8 @@
       "Bash(git add:*)",
       "Bash(git push:*)",
       "WebFetch(domain:api.slack.com)",
-      "WebFetch(domain:docs.slack.dev)"
+      "WebFetch(domain:docs.slack.dev)",
+      "Bash(node:*)"
     ]
   }
 }
