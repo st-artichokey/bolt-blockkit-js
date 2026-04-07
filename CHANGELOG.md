@@ -1,5 +1,12 @@
 # Changelog
 
+## fix: Add missing im:write scope for DM copies
+
+- Added `im:write` to `manifest.json` bot OAuth scopes — required for the "Send me a copy" DM feature to work
+- Without this scope, DM copy requests silently failed
+- Added manifest test asserting `im:write` is present
+- Total tests: 62
+
 ## fix: Restore .slack/hooks.json for Slack CLI app startup
 
 - Restored `.slack/hooks.json` — the Slack CLI bootstrap file that was accidentally deleted when `.slack/` was added to `.gitignore`

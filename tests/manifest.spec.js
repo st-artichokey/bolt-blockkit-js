@@ -55,4 +55,13 @@ describe("manifest.json", () => {
     const manifest = await loadManifest();
     assert.equal(manifest.features.bot_user.display_name, "RetroRun");
   });
+
+  it("includes im:write scope for sending DM copies", async () => {
+    const manifest = await loadManifest();
+    const scopes = manifest.oauth_config.scopes.bot;
+    assert.ok(
+      scopes.includes("im:write"),
+      `Expected bot scopes to include "im:write", got: ${scopes.join(", ")}`,
+    );
+  });
 });
