@@ -1,5 +1,10 @@
 # Changelog
 
+## refactor: Extract shared formatRetroMeta helper
+
+- Deduplicated mood emoji and categories list formatting from `buildRetroSummaryBlocks` and `buildRetroMarkdown` into `formatRetroMeta`
+- No behavior change; total tests: 65
+
 ## fix: Recover existing canvas instead of creating duplicates
 
 - `writeToCanvas` now handles the `channel_canvas_already_exists` error from `conversations.canvases.create`

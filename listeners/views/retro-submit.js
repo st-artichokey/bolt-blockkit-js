@@ -7,6 +7,13 @@ const MOOD_EMOJI = {
   tough: ":persevere:",
 };
 
+/** Returns the display emoji and formatted categories list for a retro. */
+const formatRetroMeta = (retro) => ({
+  moodEmoji: MOOD_EMOJI[retro.mood] || "",
+  categoriesList:
+    retro.categories.length > 0 ? retro.categories.join(", ") : "None selected",
+});
+
 /** In-memory canvas ID cache keyed by channel ID (max 50 entries, LRU eviction). */
 const MAX_CACHE_SIZE = 50;
 const canvasCache = new Map();
@@ -68,9 +75,7 @@ export const parseRetroValues = (values) => ({
  * @returns {object[]} An array of Block Kit blocks.
  */
 export const buildRetroSummaryBlocks = (retro, userId) => {
-  const moodEmoji = MOOD_EMOJI[retro.mood] || "";
-  const categoriesList =
-    retro.categories.length > 0 ? retro.categories.join(", ") : "None selected";
+  const { moodEmoji, categoriesList } = formatRetroMeta(retro);
 
   return [
     {
@@ -132,9 +137,7 @@ export const buildRetroSummaryBlocks = (retro, userId) => {
  * @returns {string} Markdown-formatted retro summary for canvas.
  */
 export const buildRetroMarkdown = (retro, userId) => {
-  const moodEmoji = MOOD_EMOJI[retro.mood] || "";
-  const categoriesList =
-    retro.categories.length > 0 ? retro.categories.join(", ") : "None selected";
+  const { moodEmoji, categoriesList } = formatRetroMeta(retro);
 
   return [
     `# ${retro.title}`,
