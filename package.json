@@ -9,6 +9,7 @@
     "lint": "npx @biomejs/biome check *.js listeners",
     "lint:fix": "npx @biomejs/biome check --write *.js listeners",
     "start": "node app.js",
+    "seed": "node scripts/seed-retros.js",
     "test": "node --test 'tests/**/*.spec.js' 'tests/*.spec.js'"
   },
   "author": "Slack Technologies, LLC",

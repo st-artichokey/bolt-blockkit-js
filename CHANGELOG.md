@@ -1,5 +1,12 @@
 # Changelog
 
+## feat: Add seed script for dummy retro data
+
+- Added `scripts/seed-retros.js` — creates a "Retro Canvas" with 8 dummy retro entries across 3 sprint dates
+- Auto-discovers the retro channel via `users.conversations`
+- Uses `buildRetroMarkdown` to generate canvas content matching the app's real output
+- Run with `npm run seed`
+
 ## docs: Fix inaccurate comments in retro-submit
 
 - Fixed "LRU eviction" comments to "FIFO eviction" — the cache evicts oldest-inserted, not least-recently-used
