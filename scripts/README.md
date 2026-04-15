@@ -49,17 +49,20 @@ npm run seed
 
 - **Teardown clears content, not channels.** Channels are left active so they can be reused. Slack does not allow bot tokens to unarchive channels they've been removed from, so archiving is avoided.
 - **`seed:submissions` vs `seed`:** The `seed` script bulk-creates a single canvas with all content at once. The `seed:submissions` script writes entries one at a time using the same API flow as the real app (`canvases.sections.lookup` + `canvases.edit`), which is better for testing the date-grouping logic.
-- **Idempotent channel creation:** `seed:projects` handles `name_taken` errors by finding and reusing the existing channel.
+- **Idempotent re-runs:** `seed:projects` handles both `name_taken` (channels) and `channel_canvas_already_exists` (canvases) so it can be re-run safely without teardown.
 - **Rate limits:** Teardown deletes messages individually, which can hit Slack's rate limits. The Slack SDK auto-retries, so it will complete — just may take longer on channels with many messages.
 
 ## Required OAuth Scopes
 
 These scripts use the following bot scopes (all included in `manifest.json`):
 
+**Core app scopes:**
 - `canvases:read` — look up canvas sections
 - `canvases:write` — create/edit/delete canvases
 - `channels:history` — read channel messages for teardown
-- `channels:join` — join existing channels
-- `channels:manage` — create channels, set topics
 - `channels:read` — list channels
 - `chat:write` — post messages and delete bot messages
+
+**Seed-only scopes** (not needed by the core app — only required for running these scripts):
+- `channels:join` — join existing channels
+- `channels:manage` — create channels, set topics

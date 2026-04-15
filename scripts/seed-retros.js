@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import { WebClient } from "@slack/web-api";
-import { buildRetroMarkdown } from "../listeners/views/retro-submit.js";
+import { buildDateHeading, buildRetroEntry } from "../listeners/views/retro-submit.js";
 
 dotenv.config();
 
@@ -115,9 +115,9 @@ async function main() {
   let markdown = "";
   for (const date of DATES) {
     const entries = DUMMY_RETROS.filter((r) => r.date === date);
-    markdown += `# ${date}\n\n`;
+    markdown += buildDateHeading(date);
     for (const retro of entries) {
-      markdown += buildRetroMarkdown(retro, botUserId);
+      markdown += buildRetroEntry(retro, botUserId);
     }
   }
 

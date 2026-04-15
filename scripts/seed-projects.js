@@ -198,13 +198,21 @@ async function main() {
     }
     console.log(`  Posted ${project.messages.length} messages`);
 
-    // Create canvas
-    const canvas = await client.conversations.canvases.create({
-      channel_id: channelId,
-      title: project.canvasTitle,
-      document_content: { type: "markdown", markdown: project.canvasMarkdown },
-    });
-    console.log(`  Created canvas: "${project.canvasTitle}" (${canvas.canvas_id})`);
+    // Create canvas (skip if one already exists)
+    try {
+      const canvas = await client.conversations.canvases.create({
+        channel_id: channelId,
+        title: project.canvasTitle,
+        document_content: { type: "markdown", markdown: project.canvasMarkdown },
+      });
+      console.log(`  Created canvas: "${project.canvasTitle}" (${canvas.canvas_id})`);
+    } catch (error) {
+      if (error.data?.error === "channel_canvas_already_exists") {
+        console.log(`  Canvas already exists in channel, skipping`);
+      } else {
+        throw error;
+      }
+    }
 
     console.log();
   }

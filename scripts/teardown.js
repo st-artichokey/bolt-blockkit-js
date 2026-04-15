@@ -24,19 +24,26 @@ async function cleanChannel(client, channelId, channelName, botUserId) {
   // Delete bot messages from the channel
   let deleted = 0;
   try {
-    const history = await client.conversations.history({
-      channel: channelId,
-      limit: 100,
-    });
-    for (const msg of history.messages || []) {
-      if (msg.bot_id || msg.user === botUserId) {
-        try {
-          await client.chat.delete({ channel: channelId, ts: msg.ts });
-          deleted++;
-        } catch {
-          // Can't delete some messages (e.g. system messages) — skip
+    let cursor;
+    let hasMore = true;
+    while (hasMore) {
+      const history = await client.conversations.history({
+        channel: channelId,
+        limit: 100,
+        cursor,
+      });
+      for (const msg of history.messages || []) {
+        if (msg.bot_id || msg.user === botUserId) {
+          try {
+            await client.chat.delete({ channel: channelId, ts: msg.ts });
+            deleted++;
+          } catch {
+            // Can't delete some messages (e.g. system messages) — skip
+          }
         }
       }
+      hasMore = history.has_more;
+      cursor = history.response_metadata?.next_cursor;
     }
   } catch (error) {
     console.log(`  Could not clean messages: ${error.message}`);
