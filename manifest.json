@@ -32,6 +32,7 @@
       "bot": [
         "canvases:write",
         "channels:history",
+        "channels:manage",
         "channels:read",
         "chat:write",
         "commands",

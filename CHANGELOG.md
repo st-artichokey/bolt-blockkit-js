@@ -1,5 +1,12 @@
 # Changelog
 
+## feat: Add seed script for demo project channels
+
+- Added `scripts/seed-projects.js` — creates 3 project channels (#proj-aurora, #proj-beacon, #proj-cascade) with topics, messages, and project hub canvases
+- Each channel gets 8 realistic team messages and a canvas with project overview, team, architecture, sprint goals, and decision log
+- Added `channels:manage` scope to manifest for programmatic channel creation
+- Run with `npm run seed:projects`
+
 ## feat: Add seed script for dummy retro data
 
 - Added `scripts/seed-retros.js` — creates a "Retro Canvas" with 8 dummy retro entries across 3 sprint dates
