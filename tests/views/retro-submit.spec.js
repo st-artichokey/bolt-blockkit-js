@@ -311,6 +311,47 @@ describe("retroSubmitCallback", () => {
     );
   });
 
+  it("recovers when create fails with channel_canvas_already_exists", async () => {
+    const { retroSubmitCallback } = await loadModule();
+    const ack = mock.fn(async () => {});
+    // First info call returns no canvas; second (recovery) returns the existing one
+    let infoCallCount = 0;
+    const client = buildClient();
+    client.conversations.info = mock.fn(async () => {
+      infoCallCount++;
+      if (infoCallCount === 1) {
+        return { channel: { properties: {} } };
+      }
+      return {
+        channel: { properties: { canvas: { canvas_id: "F_RECOVERED" } } },
+      };
+    });
+    // Create fails because another concurrent submission already created the canvas
+    const createError = new Error("channel_canvas_already_exists");
+    createError.data = { error: "channel_canvas_already_exists" };
+    client.conversations.canvases.create = mock.fn(async () => {
+      throw createError;
+    });
+    const view = { state: { values: buildFakeValues() } };
+    const body = { user: { id: "U456" } };
+    const logger = { error: mock.fn() };
+
+    await retroSubmitCallback({ ack, view, body, client, logger });
+
+    assert.equal(
+      infoCallCount,
+      2,
+      "Should call conversations.info twice: initial lookup + recovery",
+    );
+    assert.equal(
+      client.canvases.edit.mock.calls.length,
+      1,
+      "Should fall back to editing the recovered canvas",
+    );
+    const editCall = client.canvases.edit.mock.calls[0].arguments[0];
+    assert.equal(editCall.canvas_id, "F_RECOVERED");
+  });
+
   it("sends copy to Messages tab when checkbox selected", async () => {
     const { retroSubmitCallback } = await loadModule();
     const ack = mock.fn(async () => {});

@@ -212,13 +212,35 @@ const writeToCanvas = async (client, channel, retro, userId) => {
 
   if (!canvasId) {
     const markdown = buildDateHeading(retro.date) + entry;
-    const result = await client.conversations.canvases.create({
-      channel_id: channel,
-      title: "Retro Canvas",
-      document_content: { type: "markdown", markdown },
-    });
-    cacheCanvasId(channel, result.canvas_id);
-    return { created: true };
+    try {
+      const result = await client.conversations.canvases.create({
+        channel_id: channel,
+        title: "Retro Canvas",
+        document_content: { type: "markdown", markdown },
+      });
+      cacheCanvasId(channel, result.canvas_id);
+      return { created: true };
+    } catch (error) {
+      if (error.data?.error !== "channel_canvas_already_exists") {
+        throw error;
+      }
+      // Another submission created the canvas concurrently — recover its ID and append
+      const recoveredId = await lookupCanvasId(client, channel);
+      if (!recoveredId) {
+        throw new Error("Canvas exists but could not retrieve its ID");
+      }
+      cacheCanvasId(channel, recoveredId);
+      await client.canvases.edit({
+        canvas_id: recoveredId,
+        changes: [
+          {
+            operation: "insert_at_start",
+            document_content: { type: "markdown", markdown },
+          },
+        ],
+      });
+      return { created: false };
+    }
   }
 
   // Look up existing date heading in the canvas

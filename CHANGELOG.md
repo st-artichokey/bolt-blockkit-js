@@ -6,7 +6,8 @@
 - `writeToCanvas` returns `{ created: boolean }` so the caller can distinguish new vs existing canvas
 - When a canvas is newly created, user receives: `A "Retro Canvas" was created in #channel`
 - When writing to an existing canvas, user receives the standard submission confirmation
-- Total tests: 65
+- Added error recovery for `channel_canvas_already_exists` — if a concurrent submission creates the canvas first, the second submission recovers via `conversations.info` and appends
+- Total tests: 66
 
 ## feat: Group canvas retro entries by date
 
