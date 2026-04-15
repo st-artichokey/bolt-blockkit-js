@@ -1,5 +1,13 @@
 # Changelog
 
+## feat: Auto-create named "Retro Canvas" on first submission
+
+- Canvas creation now passes `title: "Retro Canvas"` so new canvases are named instead of "sin titulo"
+- `writeToCanvas` returns `{ created: boolean }` so the caller can distinguish new vs existing canvas
+- When a canvas is newly created, user receives: `A "Retro Canvas" was created in #channel`
+- When writing to an existing canvas, user receives the standard submission confirmation
+- Total tests: 65
+
 ## feat: Group canvas retro entries by date
 
 - Rewrote `writeToCanvas` to organize retro entries under date headings (H1) in the channel canvas

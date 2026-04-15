@@ -214,10 +214,11 @@ const writeToCanvas = async (client, channel, retro, userId) => {
     const markdown = buildDateHeading(retro.date) + entry;
     const result = await client.conversations.canvases.create({
       channel_id: channel,
+      title: "Retro Canvas",
       document_content: { type: "markdown", markdown },
     });
     cacheCanvasId(channel, result.canvas_id);
-    return;
+    return { created: true };
   }
 
   // Look up existing date heading in the canvas
@@ -226,33 +227,23 @@ const writeToCanvas = async (client, channel, retro, userId) => {
     criteria: { section_types: ["h1"], contains_text: retro.date },
   });
 
-  if (sections?.length > 0) {
-    // Date heading exists — insert entry after it
-    await client.canvases.edit({
-      canvas_id: canvasId,
-      changes: [
-        {
-          operation: "insert_after",
-          section_id: sections[0].id,
-          document_content: { type: "markdown", markdown: entry },
+  const dateSection = sections?.[0];
+  const change = dateSection
+    ? {
+        operation: "insert_after",
+        section_id: dateSection.id,
+        document_content: { type: "markdown", markdown: entry },
+      }
+    : {
+        operation: "insert_at_start",
+        document_content: {
+          type: "markdown",
+          markdown: buildDateHeading(retro.date) + entry,
         },
-      ],
-    });
-  } else {
-    // No date heading — insert date + entry at the top
-    await client.canvases.edit({
-      canvas_id: canvasId,
-      changes: [
-        {
-          operation: "insert_at_start",
-          document_content: {
-            type: "markdown",
-            markdown: buildDateHeading(retro.date) + entry,
-          },
-        },
-      ],
-    });
-  }
+      };
+
+  await client.canvases.edit({ canvas_id: canvasId, changes: [change] });
+  return { created: false };
 };
 
 /**
@@ -294,19 +285,21 @@ export const retroSubmitCallback = async ({
   }
 
   let canvasWriteSucceeded = false;
+  let canvasCreated = false;
   try {
-    await writeToCanvas(client, channel, retro, userId);
+    const result = await writeToCanvas(client, channel, retro, userId);
     canvasWriteSucceeded = true;
+    canvasCreated = result.created;
   } catch (error) {
     logger.error("Failed to write retro to canvas", error);
   }
 
   if (canvasWriteSucceeded) {
     try {
-      await client.chat.postMessage({
-        channel: userId,
-        text: `Your retrospective "${retro.title}" was submitted to <#${channel}>.`,
-      });
+      const text = canvasCreated
+        ? `A "Retro Canvas" was created in <#${channel}>. Your retrospective "${retro.title}" has been saved there.`
+        : `Your retrospective "${retro.title}" was submitted to <#${channel}>.`;
+      await client.chat.postMessage({ channel: userId, text });
     } catch (error) {
       logger.error("Failed to send submission confirmation", error);
     }

@@ -210,7 +210,7 @@ describe("retroSubmitCallback", () => {
     chat: { postMessage: mock.fn(async () => ({})) },
   });
 
-  it("creates a canvas when none exists", async () => {
+  it("creates a canvas titled 'Retro Canvas' when none exists", async () => {
     const { retroSubmitCallback } = await loadModule();
     const ack = mock.fn(async () => {});
     const client = buildClient();
@@ -225,6 +225,11 @@ describe("retroSubmitCallback", () => {
     const createCall =
       client.conversations.canvases.create.mock.calls[0].arguments[0];
     assert.equal(createCall.channel_id, "C999");
+    assert.equal(
+      createCall.title,
+      "Retro Canvas",
+      "Should create canvas with title 'Retro Canvas'",
+    );
     assert.ok(
       createCall.document_content.markdown.includes("# 2026-03-28"),
       "Should include date heading",
@@ -232,6 +237,16 @@ describe("retroSubmitCallback", () => {
     assert.ok(
       createCall.document_content.markdown.includes("## Sprint 4 Retro"),
       "Should include retro entry as H2",
+    );
+
+    const creationNotice = client.chat.postMessage.mock.calls.find((call) =>
+      call.arguments[0].text.includes("Retro Canvas"),
+    );
+    assert.ok(creationNotice, "Should notify user that canvas was created");
+    assert.equal(creationNotice.arguments[0].channel, "U456");
+    assert.ok(
+      creationNotice.arguments[0].text.includes("<#C999>"),
+      "Notification should reference the retro channel",
     );
   });
 
@@ -338,7 +353,7 @@ describe("retroSubmitCallback", () => {
     );
     const call = client.chat.postMessage.mock.calls[0].arguments[0];
     assert.ok(
-      call.text.includes("submitted"),
+      call.text.includes("Retro Canvas") || call.text.includes("submitted"),
       "The only message should be the confirmation",
     );
   });
@@ -371,7 +386,10 @@ describe("retroSubmitCallback", () => {
   it("sends confirmation message to user on successful submission", async () => {
     const { retroSubmitCallback } = await loadModule();
     const ack = mock.fn(async () => {});
-    const client = buildClient();
+    const client = buildClient({
+      canvasId: "F_EXISTING",
+      dateSections: [{ id: "section_123" }],
+    });
     const view = { state: { values: buildFakeValues() } };
     const body = { user: { id: "U456" } };
     const logger = { error: mock.fn() };
