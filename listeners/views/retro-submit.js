@@ -18,9 +18,6 @@ const formatRetroMeta = (retro) => ({
 const MAX_CACHE_SIZE = 50;
 const canvasCache = new Map();
 
-/** Per-channel promise locks to prevent concurrent canvas creation. */
-const channelLocks = new Map();
-
 /**
  * Reads a required field from the modal values, throwing a descriptive error if missing.
  */
@@ -131,43 +128,36 @@ export const buildRetroSummaryBlocks = (retro, userId) => {
 };
 
 /**
- * Builds canvas markdown content for a retro entry.
+ * Builds the H1 date heading for a canvas section.
+ * @param {string} date - The date string (e.g. "2026-04-07").
+ * @returns {string} Markdown H1 heading with the date.
+ */
+export const buildDateHeading = (date) => `# ${date}\n\n`;
+
+/**
+ * Builds canvas markdown for a single retro entry (H2+ content, no date heading).
  * @param {object} retro - Parsed retro data from parseRetroValues.
  * @param {string} userId - The Slack user ID of the submitter.
- * @returns {string} Markdown-formatted retro summary for canvas.
+ * @returns {string} Markdown-formatted retro entry for canvas.
  */
-export const buildRetroMarkdown = (retro, userId) => {
+export const buildRetroEntry = (retro, userId) => {
   const { moodEmoji, categoriesList } = formatRetroMeta(retro);
 
   return [
-    `# ${retro.title}`,
+    `## ${retro.title}`,
     `**Sprint:** ${retro.sprint} | **Date:** ${retro.date}`,
     `**Mood:** ${moodEmoji} ${retro.mood} | **Focus Areas:** ${categoriesList}`,
     "---",
-    "## What Went Well",
+    "### What Went Well",
     retro.wentWell,
-    "## What Didn't Go Well",
+    "### What Didn't Go Well",
     retro.wentWrong,
-    "## Action Items",
+    "### Action Items",
     retro.actionItems,
     `> Submitted by ![](@${userId}) on ${retro.date}`,
     "",
   ].join("\n\n");
 };
-
-/**
- * Appends markdown to a canvas using insert_at_end.
- */
-const appendToCanvas = (client, canvasId, markdown) =>
-  client.canvases.edit({
-    canvas_id: canvasId,
-    changes: [
-      {
-        operation: "insert_at_end",
-        document_content: { type: "markdown", markdown },
-      },
-    ],
-  });
 
 /**
  * Looks up the existing channel canvas ID via conversations.info.
@@ -192,61 +182,90 @@ const cacheCanvasId = (channel, canvasId) => {
 };
 
 /**
- * Writes markdown to the channel canvas, creating one if needed.
- * Handles the case where a canvas already exists (e.g. after app restart)
- * by recovering the canvas ID via conversations.info.
- * Uses a per-channel lock to prevent concurrent canvas creation.
+ * Gets the canvas ID for a channel, using cache when available.
+ * @param {import('@slack/bolt').WebClient} client - Slack Web API client.
+ * @param {string} channel - The Slack channel ID.
+ * @returns {string|null} The canvas ID or null if no canvas exists.
  */
-const writeToCanvas = async (client, channel, markdown) => {
-  // Wait for any in-flight create for this channel to finish first
-  const pending = channelLocks.get(channel);
-  if (pending) {
-    await pending;
-  }
+const getCanvasId = async (client, channel) => {
+  const cached = canvasCache.get(channel);
+  if (cached) return cached;
 
-  const existingCanvasId = canvasCache.get(channel);
+  const canvasId = await lookupCanvasId(client, channel);
+  if (canvasId) cacheCanvasId(channel, canvasId);
+  return canvasId;
+};
 
-  if (existingCanvasId) {
-    try {
-      await appendToCanvas(client, existingCanvasId, markdown);
-      return;
-    } catch {
-      canvasCache.delete(channel);
-    }
-  }
+/**
+ * Writes a retro entry to the channel canvas, grouped under a date heading.
+ * - If no canvas exists, creates one with the date heading + entry.
+ * - If canvas exists but the date heading is missing, inserts date + entry at the top.
+ * - If canvas exists and the date heading is found, inserts entry after the heading.
+ * @param {import('@slack/bolt').WebClient} client - Slack Web API client.
+ * @param {string} channel - The Slack channel ID.
+ * @param {object} retro - Parsed retro data from parseRetroValues.
+ * @param {string} userId - The Slack user ID of the submitter.
+ */
+const writeToCanvas = async (client, channel, retro, userId) => {
+  const entry = buildRetroEntry(retro, userId);
+  const canvasId = await getCanvasId(client, channel);
 
-  // Create-or-recover: attempt canvas creation, falling back to ID recovery on conflict.
-  // The promise is stored in channelLocks so concurrent callers wait.
-  const createPromise = (async () => {
+  if (!canvasId) {
+    const markdown = buildDateHeading(retro.date) + entry;
     try {
       const result = await client.conversations.canvases.create({
         channel_id: channel,
+        title: "Retro Canvas",
         document_content: { type: "markdown", markdown },
       });
       cacheCanvasId(channel, result.canvas_id);
-      return;
+      return { created: true };
     } catch (error) {
       if (error.data?.error !== "channel_canvas_already_exists") {
         throw error;
       }
+      // Another submission created the canvas concurrently — recover its ID and append
+      const recoveredId = await lookupCanvasId(client, channel);
+      if (!recoveredId) {
+        throw new Error("Canvas exists but could not retrieve its ID");
+      }
+      cacheCanvasId(channel, recoveredId);
+      await client.canvases.edit({
+        canvas_id: recoveredId,
+        changes: [
+          {
+            operation: "insert_at_start",
+            document_content: { type: "markdown", markdown },
+          },
+        ],
+      });
+      return { created: false };
     }
-
-    // Canvas already exists — recover its ID and append
-    const canvasId = await lookupCanvasId(client, channel);
-    if (!canvasId) {
-      throw new Error("Canvas exists but could not retrieve its ID");
-    }
-    cacheCanvasId(channel, canvasId);
-    await appendToCanvas(client, canvasId, markdown);
-  })();
-
-  channelLocks.set(channel, createPromise);
-
-  try {
-    await createPromise;
-  } finally {
-    channelLocks.delete(channel);
   }
+
+  // Look up existing date heading in the canvas
+  const { sections } = await client.canvases.sections.lookup({
+    canvas_id: canvasId,
+    criteria: { section_types: ["h1"], contains_text: retro.date },
+  });
+
+  const dateSection = sections?.[0];
+  const change = dateSection
+    ? {
+        operation: "insert_after",
+        section_id: dateSection.id,
+        document_content: { type: "markdown", markdown: entry },
+      }
+    : {
+        operation: "insert_at_start",
+        document_content: {
+          type: "markdown",
+          markdown: buildDateHeading(retro.date) + entry,
+        },
+      };
+
+  await client.canvases.edit({ canvas_id: canvasId, changes: [change] });
+  return { created: false };
 };
 
 /**
@@ -287,22 +306,22 @@ export const retroSubmitCallback = async ({
     return;
   }
 
-  const markdown = buildRetroMarkdown(retro, userId);
-
   let canvasWriteSucceeded = false;
+  let canvasCreated = false;
   try {
-    await writeToCanvas(client, channel, markdown);
+    const result = await writeToCanvas(client, channel, retro, userId);
     canvasWriteSucceeded = true;
+    canvasCreated = result.created;
   } catch (error) {
     logger.error("Failed to write retro to canvas", error);
   }
 
   if (canvasWriteSucceeded) {
     try {
-      await client.chat.postMessage({
-        channel: userId,
-        text: `Your retrospective "${retro.title}" was submitted to <#${channel}>.`,
-      });
+      const text = canvasCreated
+        ? `A "Retro Canvas" was created in <#${channel}>. Your retrospective "${retro.title}" has been saved there.`
+        : `Your retrospective "${retro.title}" was submitted to <#${channel}>.`;
+      await client.chat.postMessage({ channel: userId, text });
     } catch (error) {
       logger.error("Failed to send submission confirmation", error);
     }

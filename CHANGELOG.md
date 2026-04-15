@@ -14,6 +14,26 @@
 - Uses `buildRetroMarkdown` to generate canvas content matching the app's real output
 - Run with `npm run seed`
 
+## feat: Auto-create named "Retro Canvas" on first submission
+
+- Canvas creation now passes `title: "Retro Canvas"` so new canvases are named instead of "sin titulo"
+- `writeToCanvas` returns `{ created: boolean }` so the caller can distinguish new vs existing canvas
+- When a canvas is newly created, user receives: `A "Retro Canvas" was created in #channel`
+- When writing to an existing canvas, user receives the standard submission confirmation
+- Added error recovery for `channel_canvas_already_exists` — if a concurrent submission creates the canvas first, the second submission recovers via `conversations.info` and appends
+- Total tests: 66
+
+## feat: Group canvas retro entries by date
+
+- Rewrote `writeToCanvas` to organize retro entries under date headings (H1) in the channel canvas
+- If a date heading already exists, new entries are inserted after it; if not, a new date section is added at the top
+- If no canvas exists yet, one is created with the date heading and entry
+- Split `buildRetroMarkdown` into `buildDateHeading` (H1 date) and `buildRetroEntry` (H2+ content)
+- Uses `canvases.sections.lookup` to find existing date headings and `canvases.edit` with `insert_after`/`insert_at_start`
+- Added `canvases:read` scope to manifest for section lookup
+- Removed concurrency locking (no longer needed with lookup-based approach)
+- Total tests: 65
+
 ## docs: Fix inaccurate comments in retro-submit
 
 - Fixed "LRU eviction" comments to "FIFO eviction" — the cache evicts oldest-inserted, not least-recently-used
