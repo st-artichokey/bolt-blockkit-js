@@ -1,5 +1,16 @@
 # Changelog
 
+## feat: Add seed and teardown scripts for test environment
+
+- `seed-retros.js` — creates a "Retro Canvas" with 8 dummy retro entries across 3 sprint dates (`npm run seed`)
+- `seed-projects.js` — creates 3 project channels with topics, 8 messages each, and project hub canvases (`npm run seed:projects`)
+- `seed-members.js` — joins bot to all project channels for full App Home access (`npm run seed:members`)
+- `seed-retro-submissions.js` — simulates sequential retro submissions exercising the date-grouping canvas write flow (`npm run seed:submissions`)
+- `teardown.js` — clears messages and canvases from seeded channels with paginated deletion (`npm run teardown`)
+- `seed-projects.js` handles idempotent re-runs (`name_taken` and `channel_canvas_already_exists`)
+- Added `channels:manage` and `channels:join` scopes to manifest (seed-only, not needed by core app)
+- Added `scripts/README.md` with setup order, reset workflow, and scope documentation
+
 ## feat: Auto-create named "Retro Canvas" on first submission
 
 - Canvas creation now passes `title: "Retro Canvas"` so new canvases are named instead of "sin titulo"

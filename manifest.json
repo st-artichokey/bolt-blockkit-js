@@ -33,6 +33,8 @@
         "canvases:read",
         "canvases:write",
         "channels:history",
+        "channels:join",
+        "channels:manage",
         "channels:read",
         "chat:write",
         "commands",
