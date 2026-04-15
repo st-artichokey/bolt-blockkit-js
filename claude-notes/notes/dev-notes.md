@@ -15,3 +15,18 @@ I honestly don’t know if I’m doing this right, but it feels like if I were j
 It’s really important to keep the architecture/purpose of the app in my head as I’m looking at its code. It often misses the point and makes weird assumptions.
 
 It also really struggles with scopes in the manifest. This might indicate that this documentation can be improved for searchability.
+
+## 4.15.2026
+It feels like there’s a creep away from what I tell it to do day to day. I don’t know if I need to be explicitly telling it to perform actions every day (e.g. today it forgot it had permission to write to the changelog and it’s long since forgotten to use the input needed sound I had it use but it still does the task completed sound). It feels like this might be a maintenance thing? But also maybe I’m doing it wrong.
+
+Because I’m not doing the PR/code myself, I’m finding it a bit hard to orient toward what I want to do with it. This might be because I”m used to thinking in the code level and not the architecture level but also it’s irritating because I feel like I’m making mistakes too.
+
+Also stuff that’s natural for me (e.g. always code on a new branch) isn’t for it, so I have to keep reminding it and myself to have these best practices. Is this a scenario where I could use a script?
+
+I know all of these issues would be ameliorated by using Claude scripts. But as a beginner user just poking around with this technology, I don’t know where I would get them. 
+
+Question of the day: When using AI how can you tell if the problem exists between chair and keyboard?
+
+Note: I’m using Slack’s acct, which means I have unlimited spend on tokens. b/c of this, I haven’t been very conscious of that
+
+Next up: finish this repo’s MVP, then create a new one with Claude using and refining scripts
