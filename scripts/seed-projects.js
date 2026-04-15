@@ -5,7 +5,7 @@ dotenv.config();
 
 const PROJECTS = [
   {
-    channel: "proj-aurora",
+    channel: "proj-aurora-v2",
     topic: "Mobile app rewrite — React Native | Sprint 6 | Ship date: May 15",
     canvasTitle: "Aurora Project Hub",
     canvasMarkdown: `# Project Aurora — Mobile App Rewrite
@@ -53,7 +53,7 @@ Full rewrite of the legacy iOS/Android apps into a single React Native codebase.
     ],
   },
   {
-    channel: "proj-beacon",
+    channel: "proj-beacon-v2",
     topic: "Internal developer platform & CLI | v2.0 beta | DX team",
     canvasTitle: "Beacon Project Hub",
     canvasMarkdown: `# Project Beacon — Developer Platform CLI
@@ -101,7 +101,7 @@ Building "Beacon" — an internal CLI and web dashboard that unifies service cre
     ],
   },
   {
-    channel: "proj-cascade",
+    channel: "proj-cascade-v2",
     topic: "Data pipeline migration — Kafka → Flink | Phase 2 | Data eng",
     canvasTitle: "Cascade Project Hub",
     canvasMarkdown: `# Project Cascade — Data Pipeline Migration
@@ -170,7 +170,7 @@ async function main() {
       console.log(`  Created channel: ${channelId}`);
     } catch (error) {
       if (error.data?.error === "name_taken") {
-        // Channel already exists — look it up and reuse
+        // Channel already exists — find it and join
         const list = await client.conversations.list({
           types: "public_channel",
           limit: 1000,
@@ -178,7 +178,8 @@ async function main() {
         const existing = list.channels.find((c) => c.name === project.channel);
         if (!existing) throw new Error(`Channel ${project.channel} exists but couldn't find it`);
         channelId = existing.id;
-        console.log(`  Channel already exists: ${channelId}`);
+        await client.conversations.join({ channel: channelId });
+        console.log(`  Reusing existing channel: ${channelId}`);
       } else {
         throw error;
       }

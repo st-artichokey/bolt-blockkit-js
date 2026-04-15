@@ -10,7 +10,10 @@
     "lint:fix": "npx @biomejs/biome check --write *.js listeners",
     "start": "node app.js",
     "seed": "node scripts/seed-retros.js",
+    "seed:members": "node scripts/seed-members.js",
     "seed:projects": "node scripts/seed-projects.js",
+    "seed:submissions": "node scripts/seed-retro-submissions.js",
+    "teardown": "node scripts/teardown.js",
     "test": "node --test 'tests/**/*.spec.js' 'tests/*.spec.js'"
   },
   "author": "Slack Technologies, LLC",
